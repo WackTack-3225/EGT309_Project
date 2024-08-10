@@ -11,7 +11,7 @@ COPY . /app
 COPY data_309 /mnt/data
 
 # If you have dependencies in a requirements.txt file, uncomment the next line
-# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Run your Python script
 CMD ["python", "data_prep.py"]
