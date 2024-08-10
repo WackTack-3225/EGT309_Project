@@ -1,7 +1,14 @@
-# retrieve_data.py
-try:
-    with open("/mnt/data/data.txt", "r") as file:
-        data = file.read()
-    print(f"Retrieved data: {data}")
-except FileNotFoundError:
-    print("File not found. Please ensure the file exists in the specified path.")
+import time
+from datetime import datetime
+
+while True:
+    try:
+        # Write to a heartbeat file every 5 seconds
+        with open("/mnt/data/heartbeat.txt", "a") as heartbeat_file:
+            heartbeat_file.write(f"Heartbeat at {datetime.now()}\n")
+        print("Heartbeat written.")
+    except Exception as e:
+        # Handle any unexpected errors
+        print(f"An error occurred: {e}")
+    
+    time.sleep(5)  # Sleep for 5 seconds

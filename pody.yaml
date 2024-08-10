@@ -1,9 +1,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: python-pod
+  name: python-pods
 spec:
   containers:
-  - name: python-container
-    image: edyson/my-python-app:latest
-    imagePullPolicy: IfNotPresent
+    - name: python-container
+      image: edysontan/pyth
+      volumeMounts:
+        - mountPath: /mnt/data  # Path inside the container
+          name: my-data-volume
+  volumes:
+    - name: my-data-volume
+      persistentVolumeClaim:
+        claimName: my-pvc
