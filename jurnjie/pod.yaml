@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dataprep-pod
+spec:
+  containers:
+    - name: data-prep-container
+      image: jurnjie/data_prep
+      volumeMounts:
+        - mountPath: /mnt/processed_data  # Path inside the container
+          name: dataprep
+  volumes:
+    - name: dataprep
+      persistentVolumeClaim:
+        claimName: dataprep-pvc  # Ensure this PVC exists and is correctly configured
