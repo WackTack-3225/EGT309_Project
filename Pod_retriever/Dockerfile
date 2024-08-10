@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
+# Copy the contents of the toinput folder into /mnt/newdata inside the container
+COPY Toinput /mnt/newdata
+
 # If you have dependencies in a requirements.txt file, uncomment the next line
 # RUN pip install --no-cache-dir -r requirements.txt
 
