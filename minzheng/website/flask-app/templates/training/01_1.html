@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Progress</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .pipeline-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .box {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            background-color: #ccc;
+            margin: 0 10px;
+            font-size: 16px;
+            color: white;
+        }
+        .arrow {
+            width: 50px;
+            height: 10px;
+            background-color: #000;
+            clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+            margin: 0 10px;
+        }
+        .completed {
+            background-color: #4CAF50; /* Green for completed steps */
+        }
+        .results-container {
+            text-align: center;
+        }
+        .result-box {
+            width: 300px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #eee;
+            color: #333;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="pipeline-container">
+        <div id="data-processing" class="box">Data Processing</div>
+        <div class="arrow"></div>
+        <div id="model-training" class="box">Model Training</div>
+        <div class="arrow"></div>
+        <div id="model-evaluation" class="box">Model Evaluation</div>
+        <div class="arrow"></div>
+        <div id="returning-results" class="box">Returning Results</div>
+    </div>
+
+    <!-- New section to display results from the inference pod -->
+    <div class="results-container">
+        <div id="result" class="result-box">
+            Waiting for inference results...
+        </div>
+    </div>
+
+    <script>
+        // This function will be called when you want to update the step's color
+        function updateStep(step) {
+            document.getElementById(step).classList.add('completed');
+        }
+
+        function checkProgress() {
+            fetch('/progress')  // Assuming an endpoint returns current progress
+                .then(response => response.json())
+                .then(data => {
+                    if (data.step) {
+                        updateStep(data.step);
+                    }
+
+                    // Update the results section with data from the inference pod
+                    if (data.inference_result) {
+                        document.getElementById('result').innerText = `Inference Result: ${data.inference_result}`;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Poll the server every few seconds to update progress
+        setInterval(checkProgress, 2000);
+    </script>
+</body>
+</html>

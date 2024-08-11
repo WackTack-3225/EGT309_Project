@@ -1,0 +1,165 @@
+# Define the Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+
+---
+# Flask App Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: ml-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-container
+        image: wacktack/flask-app
+        ports:
+        - containerPort: 5000 # set port 5000
+
+---
+# Flask app service
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+spec:
+  selector:
+    app: flask-app
+  ports:
+    - protocol: TCP
+      port: 80  # External port
+      targetPort: 5000  # Flask app port inside the container
+  type: LoadBalancer  # LoadBalancer for external
+
+---
+# Data Processing Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processing
+  namespace: ml-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-processing
+  template:
+    metadata:
+      labels:
+        app: data-processing
+    spec:
+      containers:
+      - name: data-processing-container
+        image: your-data-processing-image:latest
+        ports:
+        - containerPort: 8080
+
+---
+# Model Training Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-training
+  namespace: ml-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-training
+  template:
+    metadata:
+      labels:
+        app: model-training
+    spec:
+      containers:
+      - name: model-training-container
+        image: your-model-training-image:latest
+        ports:
+        - containerPort: 8081
+
+---
+# Inference Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference
+  namespace: ml-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference
+  template:
+    metadata:
+      labels:
+        app: inference
+    spec:
+      containers:
+      - name: inference-container
+        image: your-inference-image:latest
+        ports:
+        - containerPort: 8082
+
+---
+# Example Service for Data Processing
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-processing-service
+  namespace: ml-app
+spec:
+  selector:
+    app: data-processing
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: ClusterIP
+
+---
+# Example Service for Model Training
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-training-service
+  namespace: ml-app
+spec:
+  selector:
+    app: model-training
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8081
+  type: ClusterIP
+
+---
+# Example Service for Inference
+apiVersion: v1
+kind: Service
+metadata:
+  name: inference-service
+  namespace: ml-app
+spec:
+  selector:
+    app: inference
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8082
+  type: ClusterIP
