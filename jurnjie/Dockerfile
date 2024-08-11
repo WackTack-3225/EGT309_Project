@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install keras tensorflow
 
 # Run data processing script
-CMD ["python", "./data_processing.py"] 
+CMD ["python", "data_processing.py"] 
