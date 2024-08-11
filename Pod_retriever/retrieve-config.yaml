@@ -1,0 +1,9 @@
+# Note: these paths are only for retrieve.py modifying this does not change the paths in pod.yaml and other files as they are static fields
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  DATA_PATH: "/mnt/data"
+  MODEL_PATH: "/mnt/save-model"
+  VOLUME_MOUNT_PATH: "/mnt"

@@ -7,9 +7,9 @@ spec:
     - name: python-container
       image: edysontan/inference
       volumeMounts:
-        - mountPath: /mnt/data  # Path inside the container
-          name: my-data-volume
+        - mountPath: /mnt  # Path inside the container
+          name: store-model-volume
   volumes:
-    - name: my-data-volume
+    - name: store-model-volume
       persistentVolumeClaim:
-        claimName: my-pvc
+        claimName: store-model-pvc
