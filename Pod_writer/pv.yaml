@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: store-model-vol
+spec:
+  capacity:
+    storage: 5Gi  # Increased to accommodate the PVC request and provide a buffer
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt"  # Directory on the Kubernetes node
