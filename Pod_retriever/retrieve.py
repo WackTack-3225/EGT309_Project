@@ -74,45 +74,56 @@ def predict():
     data = request.get_json()
 
     # Check if an image file is included in the request
-    if 'image' not in data:
-        log.write(f"{datetime.now()}: No image file in request\n")
-        return jsonify({"error": "No image file in request"}), 400
+    if 'images' not in data:
+        log.write(f"{datetime.now()}: No image files in request\n")
+        return jsonify({"error": "No image files in request"}), 400
 
-    image_data = data['image']
-
-    try:
-        # Decode the base64 image data
-        image_bytes = base64.b64decode(image_data)
-        img = Image.open(io.BytesIO(image_bytes))
-        img = img.resize((64, 64))
-        img_tensor = np.array(img)
-        img_tensor = np.expand_dims(img_tensor, axis=0)
-        img_tensor = img_tensor / 255.0
-        log.write(f"{datetime.now()}: Image received and preprocessed successfully\n")
-    except Exception as e:
-        log.write(f"{datetime.now()}: Failed to load or preprocess the image. Error: {e}\n")
-        return jsonify({"error": "Failed to load or preprocess the image"}), 500
+    images_data = data['images']
+    response_list = []
 
     # Load the model
     model = load_model_from_path(models_path)
     if model is None:
         return jsonify({"error": "Model could not be loaded"}), 500
 
+    for image_data_dict in images_data:
+        if 'image' not in image_data_dict:
+            continue  # Skip if 'image' key is not present
+        
+        image_data = image_data_dict['image']
 
-    # Ensure Prediction
-    try:
-        prediction = model.predict(img_tensor)
-        predicted_class  = get_predicted_class(prediction)
-        confidence = np.max(prediction)  # Get the confidence (maximum probability)
-        print(f"Predicted class: {predicted_class }")
-        log.write(f"{datetime.now()}: Model Predicted Successfully\n")
-    except Exception as e:
-        print(f"Failed to predict image. Error: {e}")
-        return jsonify({"error": "Failed to predict image"}), 500
+        try:
+            # Decode the base64 image data
+            image_bytes = base64.b64decode(image_data)
+            img = Image.open(io.BytesIO(image_bytes))
+            img = img.resize((64, 64))
+            img_tensor = np.array(img)
+            img_tensor = np.expand_dims(img_tensor, axis=0)
+            img_tensor = img_tensor / 255.0
+            log.write(f"{datetime.now()}: Image received and preprocessed successfully\n")
+        except Exception as e:
+            log.write(f"{datetime.now()}: Failed to load or preprocess the image. Error: {e}\n")
+            continue # skip to next image
 
-    # Prepare the image URL in base64 format
-    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    image_url = f"data:image/png;base64,{image_base64}"
+        # Ensure Prediction
+        try:
+            prediction = model.predict(img_tensor)
+            predicted_class  = get_predicted_class(prediction)
+            confidence = np.max(prediction)  # Get the confidence (maximum probability)
+            print(f"Predicted class: {predicted_class }")
+
+            # Create response object for this image
+            response = {
+                "imageUrl": f"data:image/png;base64,{image_data}",
+                "prediction": predicted_class,
+                "confidence": round(float(confidence), 2)
+            }
+            response_list.append(response)
+
+            log.write(f"{datetime.now()}: Model Predicted Successfully of class {predicted_class}\n")
+        except Exception as e:
+            print(f"Failed to predict image. Error: {e}")
+            continue
 
     # Closing logs
     log.write("--------------------------\n")
@@ -121,14 +132,7 @@ def predict():
     log.write("--------------------------\n\n")
     log.close()
 
-    # Return the prediction result in the desired format
-    response = {
-        "imageUrl": image_url,
-        "prediction": predicted_class,
-        "confidence": round(float(confidence), 2)  # Confidence rounded to two decimal places
-    }
-
-    return jsonify(response)
+    return jsonify(response_list)
 
 # Running the Flask app
 if __name__ == '__main__':
