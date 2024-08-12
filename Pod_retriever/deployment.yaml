@@ -1,0 +1,105 @@
+# Define the Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+
+---
+
+# Configmap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: ml-app        # The namespace in which the Service is created
+data:
+  DATA_PATH: "/mnt/data"
+  MODEL_PATH: "/mnt/save-model"
+  VOLUME_MOUNT_PATH: "/mnt"
+
+
+---
+
+# Service
+apiVersion: v1  # Specifies the API version to use for the Service object
+kind: Service   # Defines this as a Service object
+metadata:
+  name: inference-service  # The name of the Service
+  namespace: ml-app        # The namespace in which the Service is created
+spec:
+  selector:
+    app: inference         # Labels used to identify the pods this Service targets
+  ports:
+  - protocol: TCP          # The protocol for the port (usually TCP)
+    port: 80               # The port that the Service exposes to the outside world
+    targetPort: 8083       # The port on the pod/container that the Service forwards traffic to
+  type: ClusterIP          # The type of Service; ClusterIP means it's accessible only within the cluster
+
+---
+
+# PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: store-model-pvc
+  namespace: ml-app        # The namespace in which the PVC is created
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+
+---
+
+# Inference Deployment
+apiVersion: apps/v1  # Specifies the API version to use for the Deployment object
+kind: Deployment     # Defines this as a Deployment object
+metadata:
+  name: inference    # The name of the Deployment
+  namespace: ml-app  # The namespace in which the Deployment is created
+spec:
+  replicas: 1        # Number of pod replicas that should be running at all times
+  selector:
+    matchLabels:
+      app: inference # The label that this Deployment uses to manage the pods it creates
+  strategy:
+    type: RollingUpdate  # Deployment strategy; RollingUpdate updates the pods in a rolling fashion
+    rollingUpdate:
+      maxUnavailable: 1  # During an update, at most 1 pod can be unavailable at a time
+      maxSurge: 1        # During an update, at most 1 extra pod can be created temporarily
+  template:
+    metadata:
+      name: inference-pod
+      labels:
+        app: inference   # Labels attached to the pods created by this Deployment
+    spec:
+      restartPolicy: Always #Wont restart for 1 time task
+      containers:
+        - name: inference-container
+          image: edysontan/inference
+          ports:
+            - containerPort: 8083              # Port that the container listens on
+          volumeMounts:
+            - mountPath: /mnt  # Path inside the container
+              name: store-model-volume
+          env:
+            - name: DATA_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DATA_PATH
+            - name: MODEL_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MODEL_PATH
+            - name: VOLUME_MOUNT_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: VOLUME_MOUNT_PATH
+      volumes:
+        - name: store-model-volume
+          persistentVolumeClaim:
+            claimName: store-model-pvc
