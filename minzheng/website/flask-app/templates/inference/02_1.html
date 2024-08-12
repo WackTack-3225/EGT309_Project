@@ -95,16 +95,35 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
+        .loading-screen {
+            display: none; /* Initially hidden */
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            z-index: 1001; /* Above the popup overlay */
+        }
     </style>
 </head>
 <body>
+    <div class="loading-screen" id="loading-screen">
+        <h2>Loading...</h2>
+        <p>Please wait while we process the images.</p>
+    </div>
+
     <div class="container">
-        <h1>Upload an Image and Trigger Inference</h1>
+        <h1>Upload Images and Trigger Inference</h1>
         <form id="imageForm" enctype="multipart/form-data">
-            <input type="file" name="image" id="imageInput" class="input-file" accept="image/*" required>
-            <img id="image-preview" alt="Image Preview">
-            <button type="button" id="remove-button" class="button">Remove Image</button>
-            <input type="submit" class="button" value="Upload Image and Trigger Inference">
+            <input type="file" name="image" id="imageInput" class="input-file" accept="image/*" multiple required>
+            <div id="image-preview-container"></div>
+            <button type="button" id="remove-button" class="button">Remove All Images</button>
+            <input type="submit" class="button" value="Upload Images and Trigger Inference">
         </form>
     </div>
 
@@ -112,38 +131,45 @@
     <div class="popup-overlay" id="popup-overlay"></div>
     <div class="popup" id="popup">
         <h2>Inference Result</h2>
-        <p><strong>Prediction:</strong> <span id="prediction"></span></p>
-        <p><strong>Confidence:</strong> <span id="confidence"></span></p>
+        <div id="results"></div>
         <button class="close" id="close-popup">Close</button>
     </div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
-        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
         const removeButton = document.getElementById('remove-button');
         const popupOverlay = document.getElementById('popup-overlay');
         const popup = document.getElementById('popup');
         const closePopup = document.getElementById('close-popup');
 
         imageInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                    removeButton.style.display = 'inline-block';
-                };
-                reader.readAsDataURL(file);
+            imagePreviewContainer.innerHTML = ''; // Clear previous previews
+            const files = event.target.files;
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.maxWidth = '200px';
+                        img.style.maxHeight = '200px';
+                        img.style.margin = '10px';
+                        img.style.border = '1px solid #ccc';
+                        img.style.borderRadius = '5px';
+                        imagePreviewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+                removeButton.style.display = 'inline-block';
             } else {
-                imagePreview.style.display = 'none';
                 removeButton.style.display = 'none';
             }
         });
 
         removeButton.addEventListener('click', function() {
             imageInput.value = ''; // Clear the file input
-            imagePreview.style.display = 'none'; // Hide the image preview
+            imagePreviewContainer.innerHTML = ''; // Clear the image previews
             removeButton.style.display = 'none'; // Hide the remove button
         });
 
@@ -151,13 +177,18 @@
             event.preventDefault();
 
             if (imageInput.files.length === 0) {
-                alert('Please select an image to upload.');
+                alert('Please select at least one image to upload.');
                 return;
             }
 
             const formData = new FormData();
-            formData.append('image', imageInput.files[0]);
+            Array.from(imageInput.files).forEach((file, index) => {
+                formData.append(`image_${index}`, file); // Append each file with a unique key
+            });
             formData.append('payload', 200);
+
+            // Show loading screen
+            document.getElementById('loading-screen').style.display = 'block';
 
             fetch('/inference', {  // send to inference in app.py
                 method: 'POST',
@@ -165,15 +196,20 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Display the prediction and confidence in the popup
-                document.getElementById('prediction').innerText = data.prediction;
-                document.getElementById('confidence').innerText = data.confidence;
+                // Store the result in sessionStorage to pass to the results page
+                sessionStorage.setItem('inferenceResults', JSON.stringify(data));
 
-                // Show the popup
-                popupOverlay.style.display = 'block';
-                popup.style.display = 'block';
+                // Navigate to the results page
+                window.location.href = '02_2.html'; // Assuming the results page is at /results
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error processing your request.');
+            })
+            .finally(() => {
+                // Hide the loading screen
+                document.getElementById('loading-screen').style.display = 'none';
+            });
         });
 
         closePopup.addEventListener('click', function() {
