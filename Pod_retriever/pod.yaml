@@ -1,8 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: retrieverpod
+  name: inference-pod
 spec:
+  restartPolicy: Never #Wont restart for 1 time task
   containers:
     - name: python-container
       image: edysontan/inference

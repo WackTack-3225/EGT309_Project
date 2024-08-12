@@ -4,7 +4,7 @@ metadata:
   name: store-model-vol
 spec:
   capacity:
-    storage: 1Gi
+    storage: 5Gi  # Increased to accommodate the PVC request and provide a buffer
   accessModes:
     - ReadWriteOnce
   hostPath:
