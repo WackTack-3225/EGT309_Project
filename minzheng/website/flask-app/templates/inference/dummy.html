@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inference Results</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            text-align: center;
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            max-height: 80vh; /* Set maximum height */
+            overflow-y: auto; /* Enable vertical scrolling */
+            width: 80%; /* Adjust width for better view */
+        }
+        .image-result {
+            margin: 20px 0;
+        }
+        img {
+            max-width: 200px;
+            max-height: 200px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Inference Results</h1>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Dummy data setup
+        const dummyResults = [
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133512733492206645.jpg', // This is a placeholder image
+                prediction: 'Cat',
+                confidence: '95%'
+            },
+            {
+                imageUrl: '133530917015362928.jpg', // Another placeholder image
+                prediction: 'Dog',
+                confidence: '89%'
+            }
+        ];
+        sessionStorage.setItem('inferenceResults', JSON.stringify(dummyResults));
+
+        // Render the results from sessionStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultsContainer = document.getElementById('results');
+            const results = JSON.parse(sessionStorage.getItem('inferenceResults'));
+
+            if (results && results.length > 0) {
+                results.forEach(result => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.classList.add('image-result');
+                    resultDiv.innerHTML = `<img src="${result.imageUrl}" alt="Image">
+                                           <p><strong>Prediction:</strong> ${result.prediction}</p>
+                                           <p><strong>Confidence:</strong> ${result.confidence}</p>`;
+                    resultsContainer.appendChild(resultDiv);
+                });
+            } else {
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
