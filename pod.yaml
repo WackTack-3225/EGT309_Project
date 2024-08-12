@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-processing-pod
+  labels:
+    app: data-processing
+spec:
+  containers:
+  - name: data-processing-container
+    image: jurnjie/data-processing:latest
+    volumeMounts:
+    - mountPath: "/app/data_309"
+      name: data-volume
+    env:
+    - name: TRAIN_DIR
+      value: "/app/data_309/train"
+    - name: TEST_DIR
+      value: "/app/data_309/test"
+  volumes:
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: data-pvc
+  restartPolicy: Always
