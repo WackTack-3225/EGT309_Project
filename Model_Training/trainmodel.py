@@ -4,16 +4,19 @@ from keras.applications import MobileNetV2
 from keras import layers, models
 import tensorflow as tf
 
-# Error handling around the import of train and validation generators
 try:
-    from data_processing import train_generator, validation_generator
-except ImportError as e:
-    print(f"Error importing train_generator and validation_generator: {e}")
-    sys.exit(1)
+    # Define the paths to the training and validation data
+    train_data_dir = os.path.join(os.getcwd(),  '/app/data_309/train')
+    validation_data_dir = os.path.join(os.getcwd(), '/app/data_309/test')
 
-try:
+    # Ensure the directories exist
+    if not os.path.exists(train_data_dir):
+        raise FileNotFoundError(f"Training data directory not found: {train_data_dir}")
+    if not os.path.exists(validation_data_dir):
+        raise FileNotFoundError(f"Validation data directory not found: {validation_data_dir}")
+
     # Path to save the model
-    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/model_training/saved_model/trained_model')
+    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model')
 
     if not model_save_path:
         raise ValueError("MODEL_SAVE_PATH environment variable is not set or is empty.")

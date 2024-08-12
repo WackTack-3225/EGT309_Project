@@ -5,16 +5,16 @@ metadata:
 spec:
   containers:
   - name: model-training-container
-    image: yourdockerhubusername/model-trainer:latest
-    command: ["python", "train.py"]
+    image: 200iqkid/model_training:latest
+    command: ["python", "trainmodel.py"]
     volumeMounts:
     - mountPath: /mnt/data
       name: model-training-volume
-    - mountPath: /mnt/model_training/saved_model
+    - mountPath: /mnt/saved_model
       name: model-output-volume
     env:
     - name: MODEL_SAVE_PATH
-      value: "/mnt/model_training/saved_model/trained_model"
+      value: "/mnt/saved_model/trained_model"
   volumes:
   - name: model-training-volume
     persistentVolumeClaim:
