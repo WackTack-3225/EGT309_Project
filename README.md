@@ -1,5 +1,4 @@
 # Readme file
-
 MODEL INPUT/OUTPUTS
 
 ## Training Pipeline
@@ -76,11 +75,3 @@ WHAT I WANT FROM INFERENCE POD:
     }
 ]
 ```
-
-
-
-
-
-
-
-
