@@ -13,7 +13,7 @@ except ImportError as e:
 
 try:
     # Path to save the model
-    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/model_training/saved_model/my_model.h5')
+    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/model_training/saved_model/trained_model')
 
     if not model_save_path:
         raise ValueError("MODEL_SAVE_PATH environment variable is not set or is empty.")
