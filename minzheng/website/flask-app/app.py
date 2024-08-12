@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+import base64
 import subprocess
 import requests
 import os
@@ -52,79 +53,81 @@ def process_payload():
         result = {"error": "Invalid pipeline"}
     return jsonify(result)
 
-# Inference START
-
+### Inference START
 @app.route('/inference', methods=['POST'])
 def inference():
+    # Check if any files were uploaded
     if 'image' not in request.files:
         return jsonify({'error': 'No image part in the request'}), 400
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
 
-    # Get the payload
-    payload = request.form.get('payload')
-    if not payload:
-        return jsonify({'error': 'No payload provided'}), 400
+    files = request.files.getlist('image')  # Get list of uploaded files
+    if len(files) == 0:
+        return jsonify({'error': 'No selected files'}), 400
 
-    # Forward the image and payload to the data processing pod
-    processed_image_data = forward_to_data_processing_pod(file, payload)
+    results = []
 
-    # Check if the data processing pod returned an error
-    if 'error' in processed_image_data:
-        return jsonify(processed_image_data), 400
+    # Loop through each uploaded file
+    for file in files:
+        if file.filename == '':
+            return jsonify({'error': 'One or more files have no filename'}), 400
 
-    # Now forward the processed image data to the inference pod
-    inference_result = forward_to_inference_pod(processed_image_data)
+        # Get the payload
+        payload = request.form.get('payload')
+        if not payload:
+            return jsonify({'error': 'No payload provided'}), 400
 
-    # Return the final inference result to the client
-    return jsonify(inference_result)
+        # Forward the image and payload to the data processing pod
+        inference_result = forward_to_inference_pod(file, payload)
 
-def forward_to_data_processing_pod(image_file, payload):
-    """
-    This function sends the image and payload to the data processing pod
-    and returns the processed image data.
-    """
-    DATA_PROCESSING_POD_URL = "http://data-processing-pod-service/process"  # Replace with pod URL
+        # Check if the inference pod returned an error
+        if 'error' in inference_result:
+            return jsonify(inference_result), 400
+
+        # Add the result to the list of results
+        results.append(inference_result)
+
+    # Return all inference results to the client
+    return jsonify(results)
+
+def forward_to_inference_pod(image_file, payload):
+    INF_POD_URL = "http://inf-pod-service/process"  # Replace with pod URL
 
     files = {'image': image_file}
     data = {'payload': payload}
 
     try:
-        response = requests.post(DATA_PROCESSING_POD_URL, files=files, data=data)
-        if response.status_code == 200:
-            return response.json()
+        response = requests.post(INF_POD_URL, files=files, data=data)
+        if response.status_code == 200:  # expects status 200 with data
+            response_data = response.json()
+
+            # Assuming the inference pod returns prediction and confidence
+            prediction = response_data.get('prediction')
+            confidence = response_data.get('confidence')
+
+            # Convert the image file to base64
+            image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+            image_url = f"data:image/png;base64,{image_base64}"
+
+            return {
+                "imageUrl": image_url,
+                "prediction": prediction,
+                "confidence": confidence
+            }
         else:
             return {"error": "Data processing pod error", "status_code": response.status_code}
     
     except requests.exceptions.RequestException as e:
         return {"error": f"Failed to reach data processing pod: {e}"}
-
-def forward_to_inference_pod(processed_image_data):
-    """
-    This function sends the processed image data to the inference pod
-    and returns the inference result.
-    """
-    INFERENCE_POD_URL = "http://inference-pod-service/inference"  # Replace with pod URL
-
-    try:
-        response = requests.post(INFERENCE_POD_URL, json=processed_image_data)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {"error": "Inference pod error", "status_code": response.status_code}
-    
-    except requests.exceptions.RequestException as e:
-        return {"error": f"Failed to reach inference pod: {e}"}
     
 # Inference END
+# INFERENCE SKELETON WORKING COMPLETELY, DO NOT MODIFY - 12/8/2024
 
 def run_training_pipeline(payload): # sends code to training pipeline
     """
     This function forwards the payload to the data processing pod 
     and triggers the training pipeline.
     """
-    DATA_PROCESSING_POD_URL = "http://data-processing-pod-service/process"  # Replace with the pod URL
+    DATA_PROCESSING_POD_URL = "http://data-processing-pod-service/process"  # Replace with the pod URL, need a flask for each pod and also find the cluster ip url
 
     data = {'payload': payload}
 
