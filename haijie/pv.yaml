@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: model-training-pv
+spec:
+  capacity:
+    storage: 5Gi  # Adjust the size as needed
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/data"  # Path on the host machine
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: model-output-pv
+spec:
+  capacity:
+    storage: 5Gi  # Adjust the size as needed
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/model_output"  # Path on the host machine
