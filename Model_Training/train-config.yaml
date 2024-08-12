@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: train-config
+data:
+  DATA_PATH: "/mnt/data/training_data.csv"
+  MODEL_SAVE_PATH: "/mnt/models/my_model.h5"
