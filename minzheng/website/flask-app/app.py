@@ -89,7 +89,6 @@ def forward_to_inference_pod(files, payload):
         image_base64 = base64.b64encode(file.read()).decode('utf-8')
         images.append({
             'image': image_base64,
-            'filename': file.filename
         })
     
     # Create the JSON payload
