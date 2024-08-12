@@ -12,47 +12,44 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')  
 
-# Serve the pipeline progress HTML file
-@app.route('/training')
-def training():
-    return render_template('training/01_1.html')  # Serve the 01_1.html file from the training directory
-
-# Pipeline Code START
-# Endpoint for pods to send their status updates
-@app.route('/update_status', methods=['POST'])  
-def update_status():
-    global current_step, inference_result
-    data = request.get_json()
-    current_step = data.get('step')
-
-    # Check if the inference pod sent back results
-    if 'inference_result' in data:
-        inference_result = data['inference_result']
-
-    return jsonify({"status": "updated", "current_step": current_step})
-
-# Endpoint for the frontend to check the current progress
-@app.route('/progress', methods=['GET'])
-def progress():
-    global inference_result
-    response = {"step": current_step, "inference_result": inference_result}
-
-    # Clear the varaibles after returning it to the client
-    inference_result = None
-    current_step = None
-
-    return jsonify(response)
-
-# Pipeline Code END
-
+# Endpoint to start the model training
 @app.route('/process', methods=['POST'])
-def process_payload():
-    data = request.get_json()
-    if data['message'] == 'run_training_pipeline':
-        result = run_training_pipeline(data['payload'])
-    else:
-        result = {"error": "Invalid pipeline"}
-    return jsonify(result)
+def start_training():
+    try:
+        # Send POST request to data processing pod to start the training
+        DP_POD_URL = "http://data-processing-pod/start-training"  # Replace with the actual URL of your data processing pod
+        payload = request.json
+
+        response = requests.post(DP_POD_URL, json=payload)
+
+        if response.status_code == 200 and response.json().get('success'):
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"success": False, "error": "Training pipeline failed"}), 500
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Endpoint to get model accuracy and parameters
+@app.route('/results', methods=['POST'])
+def get_model_info():
+    try:
+        # Send POST request to inference pod to retrieve model data
+        inference_pod_url = "http://inference-pod/get-model-info"  # Replace with the actual URL of your inference pod
+        response = requests.post(inference_pod_url, json=request.json)
+
+        if response.status_code == 200 and response.json().get('success'):
+            data = response.json()
+            return jsonify({
+                "success": True,
+                "accuracy": data.get('accuracy'),
+                "parameters": data.get('parameters')
+            }), 200
+        else:
+            return jsonify({"success": False, "error": "Failed to retrieve model data"}), 500
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 ### Inference START
 @app.route('/inference', methods=['POST'])
@@ -112,25 +109,6 @@ def forward_to_inference_pod(files, payload):
     
 # Inference END
 # INFERENCE SKELETON WORKING COMPLETELY, DO NOT MODIFY - 12/8/2024
-
-def run_training_pipeline(payload): # sends code to training pipeline
-    """
-    This function forwards the payload to the data processing pod 
-    and triggers the training pipeline.
-    """
-    DATA_PROCESSING_POD_URL = "http://data-processing-pod-service/process"  # Replace with the pod URL, need a flask for each pod and also find the cluster ip url
-
-    data = {'payload': payload}
-
-    try:
-        response = requests.post(DATA_PROCESSING_POD_URL, json=data)
-        if response.status_code == 100:
-            return response.json()
-        else:
-            return {"error": "Data processing pod error", "status_code": response.status_code}
-    
-    except requests.exceptions.RequestException as e:
-        return {"error": f"Failed to reach data processing pod: {e}"}
 
 
 if __name__ == '__main__':
