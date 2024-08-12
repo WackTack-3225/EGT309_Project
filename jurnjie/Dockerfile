@@ -10,9 +10,9 @@ COPY requirements.txt .
 # Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
-COPY . .
+COPY data_309 /mnt/data
 
+COPY . /app
 # Set environment variables to prevent Python from buffering stdout/stderr
 ENV PYTHONUNBUFFERED=1
 
