@@ -5,6 +5,7 @@ import os
 import numpy as np
 from flask import Flask, request, jsonify
 import io
+import base64
 
 
 # Tensorflow improrts
@@ -68,15 +69,21 @@ def predict():
     log.write("Logging for inference pod\n")
     log.write(f"Log start time: {datetime.now()}\n")
     log.write("--------------------------\n")
+    
+
+    data = request.get_json()
 
     # Check if an image file is included in the request
-    if 'image' not in request.files:
+    if 'image' not in data:
         log.write(f"{datetime.now()}: No image file in request\n")
         return jsonify({"error": "No image file in request"}), 400
 
-    file = request.files['image']
+    image_data = data['image']
+
     try:
-        img = Image.open(io.BytesIO(file.read()))
+        # Decode the base64 image data
+        image_bytes = base64.b64decode(image_data)
+        img = Image.open(io.BytesIO(image_bytes))
         img = img.resize((64, 64))
         img_tensor = np.array(img)
         img_tensor = np.expand_dims(img_tensor, axis=0)
@@ -95,12 +102,17 @@ def predict():
     # Ensure Prediction
     try:
         prediction = model.predict(img_tensor)
-        output = get_predicted_class(prediction)
-        print(f"Predicted class: {output}")
+        predicted_class  = get_predicted_class(prediction)
+        confidence = np.max(prediction)  # Get the confidence (maximum probability)
+        print(f"Predicted class: {predicted_class }")
         log.write(f"{datetime.now()}: Model Predicted Successfully\n")
     except Exception as e:
         print(f"Failed to predict image. Error: {e}")
         return jsonify({"error": "Failed to predict image"}), 500
+
+    # Prepare the image URL in base64 format
+    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+    image_url = f"data:image/png;base64,{image_base64}"
 
     # Closing logs
     log.write("--------------------------\n")
@@ -109,10 +121,14 @@ def predict():
     log.write("--------------------------\n\n")
     log.close()
 
-    # Return the prediction result
-    return jsonify({"predicted_class": output})
+    # Return the prediction result in the desired format
+    response = {
+        "imageUrl": image_url,
+        "prediction": predicted_class,
+        "confidence": round(float(confidence), 2)  # Confidence rounded to two decimal places
+    }
 
-
+    return jsonify(response)
 
 # Running the Flask app
 if __name__ == '__main__':
