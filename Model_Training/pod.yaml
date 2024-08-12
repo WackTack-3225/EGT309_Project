@@ -1,7 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: trainerpod
+  name: model-training-pod
+  labels:
+      app: model-training
 spec:
   containers:
     - name: python-container
