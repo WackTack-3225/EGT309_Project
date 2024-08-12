@@ -65,41 +65,36 @@ def inference():
     if len(files) == 0:
         return jsonify({'error': 'No selected files'}), 400
 
-    results = []
+    # Get the payload
+    payload = request.form.get('payload')
+    if not payload:
+        return jsonify({'error': 'No payload provided'}), 400
 
-    # Loop through each uploaded file
-    for file in files:
-        if file.filename == '':
-            return jsonify({'error': 'One or more files have no filename'}), 400
+    # Forward all images and the payload to the data processing pod
+    inference_results = forward_to_inference_pod(files, payload)
 
-        # Get the payload
-        payload = request.form.get('payload')
-        if not payload:
-            return jsonify({'error': 'No payload provided'}), 400
-
-        # Forward the image and payload to the data processing pod
-        inference_result = forward_to_inference_pod(file, payload)
-
-        # Check if the inference pod returned an error
-        if 'error' in inference_result:
-            return jsonify(inference_result), 400
-
-        # Add the result to the list of results
-        results.append(inference_result)
+    # Check if the inference pod returned an error
+    if 'error' in inference_results:
+        return jsonify(inference_results), 400
 
     # Return all inference results to the client
-    return jsonify(results)
+    return jsonify(inference_results)
 
-def forward_to_inference_pod(image_file, payload):
+def forward_to_inference_pod(files, payload):
     INF_POD_URL = "http://inf-pod-service/process"  # Replace with your pod's URL
 
-    # Convert the image to Base64
-    image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+    # Prepare the list of images in Base64 format
+    images = []
+    for file in files:
+        image_base64 = base64.b64encode(file.read()).decode('utf-8')
+        images.append({
+            'image': image_base64,
+            'filename': file.filename
+        })
     
     # Create the JSON payload
     json_payload = {
-        'image': image_base64,
-        'filename': image_file.filename,
+        'images': images,
         'payload': payload
     }
 
@@ -108,22 +103,13 @@ def forward_to_inference_pod(image_file, payload):
         response = requests.post(INF_POD_URL, json=json_payload)
         
         if response.status_code == 200:  # Expecting status 200 with data
-            response_data = response.json()
-
-            # Assuming the inference pod returns prediction and confidence
-            prediction = response_data.get('prediction')
-            confidence = response_data.get('confidence')
-
-            return {
-                "imageUrl": f"data:image/png;base64,{image_base64}",
-                "prediction": prediction,
-                "confidence": confidence
-            }
+            return response.json()  # Assuming the response is a list of results
         else:
             return {"error": "Data processing pod error", "status_code": response.status_code}
     
     except requests.exceptions.RequestException as e:
         return {"error": f"Failed to reach data processing pod: {e}"}
+
     
 # Inference END
 # INFERENCE SKELETON WORKING COMPLETELY, DO NOT MODIFY - 12/8/2024
