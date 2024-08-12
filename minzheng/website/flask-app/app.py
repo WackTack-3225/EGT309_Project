@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 import base64
+import json
 import subprocess
 import requests
 import os
@@ -90,26 +91,31 @@ def inference():
     return jsonify(results)
 
 def forward_to_inference_pod(image_file, payload):
-    INF_POD_URL = "http://inf-pod-service/process"  # Replace with pod URL
+    INF_POD_URL = "http://inf-pod-service/process"  # Replace with your pod's URL
 
-    files = {'image': image_file}
-    data = {'payload': payload}
+    # Convert the image to Base64
+    image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+    
+    # Create the JSON payload
+    json_payload = {
+        'image': image_base64,
+        'filename': image_file.filename,
+        'payload': payload
+    }
 
     try:
-        response = requests.post(INF_POD_URL, files=files, data=data)
-        if response.status_code == 200:  # expects status 200 with data
+        # Send the JSON data to the inference pod
+        response = requests.post(INF_POD_URL, json=json_payload)
+        
+        if response.status_code == 200:  # Expecting status 200 with data
             response_data = response.json()
 
             # Assuming the inference pod returns prediction and confidence
             prediction = response_data.get('prediction')
             confidence = response_data.get('confidence')
 
-            # Convert the image file to base64
-            image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
-            image_url = f"data:image/png;base64,{image_base64}"
-
             return {
-                "imageUrl": image_url,
+                "imageUrl": f"data:image/png;base64,{image_base64}",
                 "prediction": prediction,
                 "confidence": confidence
             }
