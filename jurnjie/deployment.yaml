@@ -1,0 +1,131 @@
+
+# namespace for the cluster
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+
+---
+
+# Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: processing-service
+spec:
+  selector:
+    app: data-processing-deployment
+  ports:
+  - protocol: TCP
+    port: 81
+    targetPort: 8084
+  type: ClusterIP
+
+---
+
+# PV
+# allow request of storage
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-pv
+spec:
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/data"
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: processed-data-volume
+spec:
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/app/data_309"
+
+---
+
+# PVC 
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: ml-app
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: processed-data-pvc
+  namespace: ml-app
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi
+
+---
+
+# Deployment 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processing-deployment
+  namespace: ml-app
+  labels:
+    app: data-processing
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: data-processing
+  template:
+    metadata:
+      labels:
+        app: data-processing
+    spec:
+      containers:
+      - name: data-processing-container
+        image: jurnjie/data-processing:latest
+        volumeMounts:
+        - mountPath: "/app/data_309"
+          name: data-pv-volume
+        env:
+        - name: TRAIN_DIR
+          value: "/app/data_309/train"
+        - name: TEST_DIR
+          value: "/app/data_309/test"
+      volumes:
+      - name: data-pv-volume
+        persistentVolumeClaim:
+          claimName: data-pvc
+      - name: shared-data
+        persistentVolumeClaim:
+          claimName: processed-data-pvc
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  revisionHistoryLimit: 10  # Keep a history of 10 revisions for rollback
+  minReadySeconds: 5  # Minimum time a Pod should be ready before considered stable
+  progressDeadlineSeconds: 600  # Deadline for progressing the deployment        

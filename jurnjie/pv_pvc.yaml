@@ -8,7 +8,9 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: "/app/data_309"
+    path:"/mnt/data"
+    # path: "/app/data_309"
+    
 
 ---
 apiVersion: v1
