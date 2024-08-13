@@ -1,0 +1,130 @@
+# Define the Namespace
+
+# To seperate resource within cluster
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+
+---
+
+# Configmap
+
+# Store non-confidential data
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: ml-app        # The namespace in which the Service is created
+data:
+  DATA_PATH: "/mnt/data"
+  MODEL_PATH: "/mnt/save-model"
+  VOLUME_MOUNT_PATH: "/mnt"
+
+
+---
+
+# Service
+
+# Service accessible from within the cluster (ClusterIP) and will sent traffic to pods
+# it manages (recieves on 80 sent to containers at 8083)
+# Does not deploy or manage pods just route traffic
+# If can control >1 pod it will auto route traffic to them
+
+apiVersion: v1  # Specifies the API version to use for the Service object
+kind: Service   # Defines this as a Service object
+metadata:
+  name: inference-service  # The name of the Service
+  namespace: ml-app        # The namespace in which the Service is created
+spec:
+  selector:
+    app: inference         # Labels used to identify the pods this Service targets
+  ports:
+  - protocol: TCP          # The protocol for the port (usually TCP)
+    port: 80               # The port that the Service exposes to the outside world
+    targetPort: 8083       # The port on the pod/container that the Service forwards traffic to
+  type: ClusterIP          # The type of Service; ClusterIP means it's accessible only within the cluster
+
+---
+
+# PVC
+
+# To allow request of a storage, request 4 Gi
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: store-model-pvc
+  namespace: ml-app        # The namespace in which the PVC is created
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+
+---
+
+# Inference Deployment
+
+# Deployment use template to how pod shld be created
+# Replicaset controller created from deployment and it ensure pod is at desired state
+# and will mintor and if not it delete, create and manage pods
+# Note: rollback history is gone (no history of replicasets) if deployment.yaml is deleted and reapplied, only has history if its reapplied without deleting and only has history if changes is in template
+
+apiVersion: apps/v1 
+kind: Deployment   
+metadata:
+  name: inference    # Name of Deployment
+  namespace: ml-app  # The namespace in which the Deployment is created
+spec:
+  replicas: 3        # Number of pod replicas that should be running at all times
+  revisionHistoryLimit: 8  # Retain the last 8 ReplicaSets for rollback (decreased from default) ensuring enough versions are kept for rollback without bloating
+  minReadySeconds: 15 # Giving 15 seconds buffer time for pod to stabilize after being ready before being able to recieve traffic (Means pod marked as ready need state read for 15 seconds before being considered available to recieve traffic)
+  # It in turns tells kubernetes that replica needs to run for 10 seconds before update/replace of next one in sequence
+  progressDeadlineSeconds: 600  # 10 minutes to complete the update or considered as failed
+  selector:
+    matchLabels:
+      app: inference # Label Deployment uses to manage the pods it creates
+  strategy:
+    type: RollingUpdate  # Deployment strategy; RollingUpdate updates the pods in a rolling fashion
+    rollingUpdate:
+      maxUnavailable: 1  # During an update, at most 1 pod can be unavailable at a time
+      maxSurge: 1        # During an update, at most 1 extra pod can be created temporarily
+      # Matching maxunavailale and maxsurge ensures stradyrollout with no reduction in total available pods
+  template:
+    metadata:
+      name: inference-pod
+      labels:
+        app: inference   # Labels attached to the pods created by this Deployment
+    spec:
+      restartPolicy: Always #Wont restart for 1 time task
+      containers:
+        - name: inference-container
+          image: edysontan/inference
+          ports:
+            - containerPort: 8083        # Port that the container listens on
+          volumeMounts:
+            - mountPath: /mnt  # Path inside container colume mounted at
+              name: store-model-volume
+          env: # environment variables for container to use
+            - name: DATA_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DATA_PATH
+            - name: MODEL_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MODEL_PATH
+            - name: VOLUME_MOUNT_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: VOLUME_MOUNT_PATH
+      volumes: # Associate store-model-volume to store-model-pvc and volumemount mounts this associated volume to /mnt
+        - name: store-model-volume
+          persistentVolumeClaim:
+            claimName: store-model-pvc

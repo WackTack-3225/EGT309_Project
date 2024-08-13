@@ -69,45 +69,39 @@ def get_model_info():
 ### Inference START
 @app.route('/inference', methods=['POST'])
 def inference():
-    # Check if any files were uploaded
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image part in the request'}), 400
+    if not request.files:
+        return jsonify({'error': 'No files found in the request'}), 400
+    
+    # Prepare a list to hold image data in Base64
+    images_data = []
 
-    files = request.files.getlist('image')  # Get list of uploaded files
-    if len(files) == 0:
-        return jsonify({'error': 'No selected files'}), 400
+    for key in request.files:
+        file = request.files[key]
 
-    # Get the payload
-    payload = request.form.get('payload')
-    if not payload:
-        return jsonify({'error': 'No payload provided'}), 400
+        # Read the file and encode it to Base64
+        image_data = base64.b64encode(file.read()).decode('utf-8')
+
+        # Append the Base64 encoded image data to the list
+        images_data.append({'image': image_data})
+
+    # Create a JSON payload
+    json_payload = {
+        'images': images_data,
+        'payload': 200  # Add any additional data you need
+    }
 
     # Forward all images and the payload to the data processing pod
-    inference_results = forward_to_inference_pod(files, payload)
+    inference_results = forward_to_inference_pod(json_payload)
 
     # Check if the inference pod returned an error
     if 'error' in inference_results:
         return jsonify(inference_results), 400
 
     # Return all inference results to the client
-    return jsonify(inference_results)
+    return jsonify(inference_results),200
 
-def forward_to_inference_pod(files, payload):
-    INF_POD_URL = "http://inf-pod-service/process"  # Replace with your pod's URL
-
-    # Prepare the list of images in Base64 format
-    images = []
-    for file in files:
-        image_base64 = base64.b64encode(file.read()).decode('utf-8')
-        images.append({
-            'image': image_base64,
-        })
-    
-    # Create the JSON payload
-    json_payload = {
-        'images': images,
-        'payload': payload
-    }
+def forward_to_inference_pod(json_payload):
+    INF_POD_URL = "http://inference-service/predict"  # Replace with your pod's URL
 
     try:
         # Send the JSON data to the inference pod
@@ -121,7 +115,6 @@ def forward_to_inference_pod(files, payload):
     except requests.exceptions.RequestException as e:
         return {"error": f"Failed to reach data processing pod: {e}"}
 
-    
 # Inference END
 # INFERENCE SKELETON WORKING COMPLETELY, DO NOT MODIFY - 12/8/2024
 
