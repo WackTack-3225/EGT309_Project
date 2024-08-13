@@ -71,7 +71,7 @@ spec:
 # Deployment use template to how pod shld be created
 # Replicaset controller created from deployment and it ensure pod is at desired state
 # and will mintor and if not it delete, create and manage pods
-
+# Note: rollback history is gone (no history of replicasets) if deployment.yaml is deleted and reapplied, only has history if its reapplied without deleting and only has history if changes is in template
 
 apiVersion: apps/v1 
 kind: Deployment   
