@@ -11,9 +11,6 @@ RUN pip install --upgrade pip
 # Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-
-# RUN pip install keras tensorflow pillow numpy
-
 COPY data_309 /mnt/data
 
 COPY . /app
