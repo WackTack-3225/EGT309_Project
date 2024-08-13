@@ -1,9 +1,15 @@
-# Define namespace
+###############################
+########## NameSpace ##########
+###############################
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ml-app
 ---
+
+########################################
+########## Model Training Pod ##########
+########################################
 apiVersion: v1
 kind: Pod
 metadata:
@@ -11,18 +17,20 @@ metadata:
   namespace: ml-app
 spec:
   containers:
-  - name: data-processing-container
+  - name: data-processing
     image: jurnjie/data-processing:latest
     volumeMounts:
     - mountPath: "/app/data_309"
       name: processed-data-volume
-  - name: model-training-container
+
+  - name: model-training
     image: 200iqkid/model-training:latest
     volumeMounts:
-    - mountPath: "/app/data_309"  # Path inside the container for the processed data
+    - mountPath: "/app/data_309"  
       name: processed-data-volume
-    - mountPath: '/mnt/saved_model' # Path inside the container where the model will be saved
+    - mountPath: '/mnt/saved_model' 
       name: saved-model-volume
+
   volumes:
   - name: processed-data-volume
     persistentVolumeClaim:
@@ -31,6 +39,12 @@ spec:
     persistentVolumeClaim:
       claimName: saved-model-pvc
 ---
+
+#######################################
+########## Persistent Volume ##########
+#######################################
+
+# PV for processed data
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -38,13 +52,15 @@ metadata:
   namespace: ml-app
 spec:
   capacity:
-    storage: 4Gi  # Adjust size based on your needs
+    storage: 4Gi  
   accessModes:
-    - ReadWriteMany  # Allows multiple Pods to read/write
+    - ReadWriteMany  
   hostPath:
-    path: "/app/data_309"  # Path on the host machine where the processed data is stored
+    path: "/mnt/processed_data"  # Path on the host machine where the processed data is stored
   persistentVolumeReclaimPolicy: Retain
 ---
+
+# PV for saved model
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -52,37 +68,44 @@ metadata:
   namespace: ml-app
 spec:
   capacity:
-    storage: 4Gi  # Adjust size based on your needs
+    storage: 4Gi  
   accessModes:
-    - ReadWriteMany  # Allows multiple Pods to read/write
+    - ReadWriteMany  
   hostPath:
     path: "/mnt/saved_model"  # Path on the host machine where the model will be saved
   persistentVolumeReclaimPolicy: Retain
 ---
+
+#############################################
+########## Persistent Volume Claim ##########
+#############################################
+
+# PVC for processed data
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: processed-data-pvc
-  namespace: ml-app
+  name: processed-data-pvc  # Name of the PVC that will request the processed data volume
+  namespace: ml-app  
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteMany 
   resources:
     requests:
       storage: 4Gi
 ---
+
+# PVC for saved model
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: saved-model-pvc  # Name of the PVC for the saved model
-  namespace: ml-app
+  name: saved-model-pvc  # Name of the PVC that will request the saved model volume
+  namespace: ml-app  
 spec:
   accessModes:
-    - ReadWriteMany  # Must match the PV's access mode
+    - ReadWriteOnce  
   resources:
     requests:
-      storage: 4Gi  # Should match or be less than the PV's capacity
-
+      storage: 4Gi  
 
 
 

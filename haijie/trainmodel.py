@@ -2,8 +2,10 @@ import os
 import sys
 import tensorflow as tf
 from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import EarlyStopping
 
 try:
     # Define the paths to the training and validation data
@@ -15,6 +17,22 @@ try:
         raise FileNotFoundError(f"Training data directory not found: {train_data_dir}")
     if not os.path.exists(validation_data_dir):
         raise FileNotFoundError(f"Validation data directory not found: {validation_data_dir}")
+    
+    # Function to check the number of images in each class directory
+    def check_images_in_directory(directory):
+        for dirpath, dirnames, filenames in os.walk(directory):
+            if dirnames:  # If it's a directory with subdirectories
+                print(f"Checking directory: {dirpath}")
+            else:
+                print(f"Found {len(filenames)} images in {dirpath}")
+
+    # Check the train directory
+    print("Checking training data directory...")
+    check_images_in_directory(train_data_dir)
+
+    # Check the test directory
+    print("Checking validation data directory...")
+    check_images_in_directory(validation_data_dir)
 
     # Path to save the model
     model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model.keras')
@@ -55,48 +73,46 @@ try:
         print(f"Error in data loading or augmentation: {e}")
         sys.exit(1)
 
+
     # MobileNetV2 Model as base model
-    try:
-        base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(64, 64, 3))
-    except Exception as e:
-        print(f"Error initializing MobileNetV2 base model: {e}")
-        sys.exit(1)
+    base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(64, 64, 3))
 
-    # Setting up the transfer learning model
-    try:
-        x = base_model.output
-        x = layers.GlobalAveragePooling2D()(x)
-        x = layers.Dense(512, activation='relu')(x)
-        predictions = layers.Dense(train_generator.num_classes, activation='softmax')(x)
-        transfer_model = models.Model(inputs=base_model.input, outputs=predictions)
-    except Exception as e:
-        print(f"Error setting up the transfer model: {e}")
-        sys.exit(1)
 
-    # Freezing base model layers
-    try:
-        for layer in base_model.layers:
-            layer.trainable = False
-            print(f"{layer.name} trainable: {layer.trainable}")
-    except Exception as e:
-        print(f"Error freezing base model layers: {e}")
-        sys.exit(1)
+    # Modify input shape and classifier layers
+    x = base_model.output
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dense(512, activation='relu')(x)
+    predictions = layers.Dense(train_generator.num_classes, activation='softmax')(x)
+    transfer_model = models.Model(inputs=base_model.input, outputs=predictions)
+
+
+    # Freezing the first 10 layers of the model
+    base_model.trainable = True
+    for layer in transfer_model.layers[:10]:
+        layer.trainable = False
+    for layer in transfer_model.layers[10:]:
+        layer.trainable = True
+
 
     # Compiling the model
-    try:
-        transfer_model.compile(loss='categorical_crossentropy',
-                               optimizer='adam',
-                               metrics=['accuracy'])
-    except Exception as e:
-        print(f"Error compiling the model: {e}")
-        sys.exit(1)
+    transfer_model.compile(
+        loss='categorical_crossentropy',
+        optimizer=Adam(1e-5),  # Lower learning rate
+        metrics=['accuracy']
+    )
+
+
+    # Early stopping to prevent overfitting
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
 
     # Training the model
     try:
         transfer_history = transfer_model.fit(
             train_generator,
-            epochs=1,  # Adjust the number of epochs as needed
-            validation_data=validation_generator
+            epochs=2,  # Adjust the number of epochs as needed
+            validation_data=validation_generator,
+            callbacks=[early_stopping]
         )
     except tf.errors.ResourceExhaustedError as e:
         print(f"Resource Exhausted Error during training: {e}")
@@ -104,6 +120,7 @@ try:
     except Exception as e:
         print(f"An error occurred during model training: {e}")
         sys.exit(1)
+
 
     # Saving the trained model
     try:
@@ -116,3 +133,5 @@ try:
 except Exception as e:
     print(f"An unexpected error occurred: {e}")
     sys.exit(1)
+
+print("trainmodel.py execution completed.")

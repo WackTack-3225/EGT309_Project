@@ -1,7 +1,7 @@
-# Stage 1: Pull in the processed data from Jurnjie's image
+# Pull in the processed data from Jurnjie's image
 FROM jurnjie/data-processing:latest as data-stage
 
-# Stage 2: Use your current base image
+# Use your current base image
 FROM python:3.11-slim
 
 # Set the working directory in the container
