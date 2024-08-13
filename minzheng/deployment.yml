@@ -1,9 +1,13 @@
+# Min Zheng - Flask app
+
 # Define the Namespace
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ml-app
 
+# This namespace is the common namespace for all our containers
+# It is the common identifier to access this application
 ---
 # Flask App Deployment
 apiVersion: apps/v1
@@ -12,25 +16,27 @@ metadata:
   name: flask-app
   namespace: ml-app
 spec:
-  replicas: 3
+  replicas: 3 # Set 3 replicas for stability
+  minReadySeconds: 120 #s to start up the pod and wait for the rest of the pods to get created also before accepting requests to it
   selector:
     matchLabels:
-      chapter: flask
+      chapter: flask # create with this deploylent for label: flask only
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
+      maxUnavailable: 1 # Allow 1 pod to be unavailable at all times
+      maxSurge: 1 # Allow 1 extra pod to be created during update
   template:
     metadata:
       labels:
-        chapter: flask
+        chapter: flask # allow flask svc to connect to it
     spec:
+      restartPolicy: Always 
       containers:
       - name: flask-container
         image: wacktack/flask-app:latest
         ports:
-        - containerPort: 5000 # set port 5000
+        - containerPort: 5000 # set port 5000 for connection
 
 ---
 # Flask app service
@@ -40,16 +46,16 @@ metadata:
   name: flask-app-service
   namespace: ml-app
   labels:
-    chapter: flask
+    chapter: flask # used to identify flask
 spec:
-  type: NodePort  # LoadBalancer for external
+  type: NodePort 
   ports:
   - protocol: TCP
-    port: 5000  # External port
+    port: 5000  # External port to access
     targetPort: 5000  # Flask app port inside the container
-    nodePort: 30005
+    nodePort: 30005 # assigned nodePort
   selector:
-    chapter: flask
+    chapter: flask # used to connect to label: flask
 
 ---
 # Data Processing Deployment
