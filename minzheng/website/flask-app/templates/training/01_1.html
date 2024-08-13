@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Pipeline Status</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            text-align: center;
+        }
+        .button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            display: none;
+            font-size: 18px;
+            color: #555;
+        }
+        .result {
+            display: none;
+            margin-top: 20px;
+        }
+        .error {
+            display: none;
+            margin-top: 20px;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Model Training Status</h1>
+        <div class="loading">Loading... Please wait.</div>
+        <div class="result">
+            <p><strong>Model Accuracy:</strong> <span id="modelAccuracy"></span></p>
+            <p><strong>Model Parameters:</strong> <span id="modelParameters"></span></p>
+        </div>
+        <div class="error" id="error">An error occurred during the process. Please try again later.</div>
+        <button class="button" onclick="startTraining()">Start Training</button>
+    </div>
+
+    <script>
+        function startTraining() {
+            // Show loading screen
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.error').style.display = 'none';
+            document.querySelector('.result').style.display = 'none';
+
+            // Send POST request to start training
+            fetch('/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    payload: 100
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+            if (data.success) {
+                // Training started successfully, now send POST request to retrieve model accuracy and parameters
+                return fetch('/results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        payload: 100  // Adjust this payload as needed
+                    })
+                });
+            } else {
+                throw new Error('Training pipeline failed');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Stop loading screen
+            document.querySelector('.loading').style.display = 'none';
+
+            if (data.success) {
+                // Display model accuracy and parameters
+                document.getElementById('modelAccuracy').textContent = data.accuracy;
+                document.getElementById('modelParameters').textContent = data.parameters;
+                document.querySelector('.result').style.display = 'block';
+            } else {
+                throw new Error('Failed to retrieve model data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Stop loading screen and show error message
+            document.querySelector('.loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+        });
+    }
+</script>
+</body>
+</html>
