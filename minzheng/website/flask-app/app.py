@@ -12,6 +12,21 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')  
 
+# Define routing for TRAIN
+@app.route('/training_page')
+def training_route():
+    return render_template('training/01_1.html')  
+
+# Define routing for INFERENCE
+@app.route('/inference_page')
+def inference_route():
+    return render_template('inference/02_1.html')  
+
+# Define routing for INFERENCE
+@app.route('/inference_page_2')
+def inference_route_2():
+    return render_template('inference/02_2.html')  
+
 # Endpoint to start the model training
 @app.route('/process', methods=['POST'])
 def start_training():

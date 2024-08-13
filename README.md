@@ -76,11 +76,3 @@ WHAT I WANT FROM INFERENCE POD:
     }
 ]
 ```
-
-
-
-
-
-
-
-
