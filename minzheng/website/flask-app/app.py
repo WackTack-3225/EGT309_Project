@@ -93,7 +93,7 @@ def inference():
     return jsonify(inference_results)
 
 def forward_to_inference_pod(files, payload):
-    INF_POD_URL = "http://inf-pod-service/process"  # Replace with your pod's URL
+    INF_POD_URL = "http://inference-service:80/predict"  # Replace with your pod's URL
 
     # Prepare the list of images in Base64 format
     images = []
