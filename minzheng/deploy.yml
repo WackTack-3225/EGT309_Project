@@ -5,6 +5,18 @@ metadata:
   name: ml-app
 
 ---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-url
+  namespace: ml-app
+data:
+  DP_POD_URL: "http://data-processing-pod/start-training"
+  INFERENCE_POD_URL: "http://inference-pod/get-model-info"
+  INF_POD_URL: "http://inference-service/predict"
+
+---
 # Flask App Deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -29,6 +41,22 @@ spec:
       containers:
       - name: flask-container
         image: wacktack/flask-app:latest
+        env:
+        - name: DP_POD_URL
+          valueFrom:
+            configMapKeyRef:
+              name: flask-url
+              key: DP_POD_URL
+        - name: INF_POD_URL
+          valueFrom:
+            configMapKeyRef:
+              name: flask-url
+              key: INF_POD_URL
+        - name: INFERENCE_POD_URL
+          valueFrom:
+            configMapKeyRef:
+              name: flask-url
+              key: INFERENCE_POD_URL
         ports:
         - containerPort: 5000 # set port 5000
 

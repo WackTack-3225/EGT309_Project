@@ -75,3 +75,14 @@ WHAT I WANT FROM INFERENCE POD:
     }
 ]
 ```
+
+
+## Port designations:
+
+Flask:
+> 5000 --> Container
+> 30005 --> Nodeport 
+
+Inference:
+> 80 --> Exposed Port
+> 8083 --> targetPort
