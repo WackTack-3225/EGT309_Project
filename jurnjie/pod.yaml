@@ -1,0 +1,54 @@
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: data-processing-pod
+#   labels:
+#     app: data-processing
+# spec:
+#   containers:
+#   - name: data-processing-container
+#     image: jurnjie/data-processing:latest
+#     volumeMounts:
+#     - mountPath: "/app/data_309"
+#       name: processed-data-volume
+#     env:
+#     - name: TRAIN_DIR
+#       value: "/app/data_309/train_gen"
+#     - name: TEST_DIR
+#       value: "/app/data_309/test_gen"
+#   volumes:
+#   - name: processed-data-volume
+#     persistentVolumeClaim:
+#       claimName: data-pvc
+#   restartPolicy: Always
+#   volumes:
+#   - name: shared-data
+#     persistentVolumeClaim:
+#       claimName: processed-data-pvc
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: data-processing-pod
+  labels:
+    app: data-processing
+spec:
+  containers:
+  - name: data-processing-container
+    image: jurnjie/data-processing:latest
+    volumeMounts:
+    - mountPath: "/app/data_309"
+      name: data-pv-volume # Corrected volume name
+    env:
+    - name: TRAIN_DIR
+      value: "/app/data_309/train"
+    - name: TEST_DIR
+      value: "/app/data_309/test"
+  volumes:
+  - name: data-pv-volume # Corrected volume name to match the volumeMount
+    persistentVolumeClaim:
+      claimName: data-pvc
+  - name: shared-data
+    persistentVolumeClaim:
+      claimName: processed-data-pvc
+  restartPolicy: Always

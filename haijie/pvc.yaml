@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: processed-data-pvc
+  namespace: ml-app
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saved-model-pvc  # Name of the PVC for the saved model
+  namespace: ml-app
+spec:
+  accessModes:
+    - ReadWriteMany  # Must match the PV's access mode
+  resources:
+    requests:
+      storage: 4Gi  # Should match or be less than the PV's capacity
