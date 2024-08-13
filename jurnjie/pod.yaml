@@ -13,11 +13,15 @@ spec:
       name: data-volume
     env:
     - name: TRAIN_DIR
-      value: "/app/data_309/train"
+      value: "/app/data_309/train_gen"
     - name: TEST_DIR
-      value: "/app/data_309/test"
+      value: "/app/data_309/test_gen"
   volumes:
   - name: data-volume
     persistentVolumeClaim:
       claimName: data-pvc
   restartPolicy: Always
+  volumes:
+  - name: shared-data
+    persistentVolumeClaim:
+      claimName: shared-data-pvc
