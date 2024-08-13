@@ -5,20 +5,37 @@ metadata:
 spec:
   containers:
   - name: model-training-container
-    image: 200iqkid/model_training:latest
-    command: ["python", "trainmodel.py"]
+    image: 200iqkid/model-training:latest
     volumeMounts:
-    - mountPath: /mnt/data
-      name: model-training-volume
-    - mountPath: /mnt/saved_model
-      name: model-output-volume
-    env:
-    - name: MODEL_SAVE_PATH
-      value: "/mnt/saved_model/trained_model"
+    - mountPath: "/app/data_309"  # The path inside the container
+      name: processed-data-volume
   volumes:
-  - name: model-training-volume
+  - name: processed-data-volume
     persistentVolumeClaim:
-      claimName: model-training-pvc
-  - name: model-output-volume
-    persistentVolumeClaim:
-      claimName: model-output-pvc
+      claimName: processed-data-pvc
+---
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: trained-model-pod
+#   labels:
+#     app: trained-model
+# spec:
+#   containers:
+#   - name: trained-model-container
+#     image: 200iqkid/trained-model:latest
+#     volumeMounts:
+#     - mountPath: "/app/data_309"
+#       name: trained-model-volume
+#     env:
+#     - name: TRAIN_DIR
+#       value: "/app/data_309/train"
+#     - name: TEST_DIR
+#       value: "/app/data_309/test"
+#   volumes:
+#   - name: data-volume
+#     persistentVolumeClaim:
+#       claimName: data-pvc
+#   restartPolicy: Always
+
+

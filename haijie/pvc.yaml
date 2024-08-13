@@ -1,21 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: model-training-pvc
+  name: processed-data-pvc
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 5Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: model-output-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 5Gi
+      storage: 4Gi

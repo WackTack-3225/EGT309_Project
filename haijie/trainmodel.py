@@ -1,13 +1,14 @@
 import os
 import sys
-from keras.applications import MobileNetV2
-from keras import layers, models
 import tensorflow as tf
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
 
 try:
     # Define the paths to the training and validation data
-    train_data_dir = os.path.join(os.getcwd(),  '/app/data_309/train')
-    validation_data_dir = os.path.join(os.getcwd(), '/app/data_309/test')
+    train_data_dir = '/app/data_309/train'
+    validation_data_dir = '/app/data_309/test'
 
     # Ensure the directories exist
     if not os.path.exists(train_data_dir):
@@ -21,6 +22,34 @@ try:
     if not model_save_path:
         raise ValueError("MODEL_SAVE_PATH environment variable is not set or is empty.")
 
+    # Data generators for loading and augmenting the images
+    try:
+        train_datagen = ImageDataGenerator(
+            rescale=1./255,
+            shear_range=0.2,
+            zoom_range=0.2,
+            horizontal_flip=True
+        )
+
+        test_datagen = ImageDataGenerator(rescale=1./255)
+
+        train_generator = train_datagen.flow_from_directory(
+            train_data_dir,
+            target_size=(64, 64),
+            batch_size=32,
+            class_mode='categorical'
+        )
+
+        validation_generator = test_datagen.flow_from_directory(
+            validation_data_dir,
+            target_size=(64, 64),
+            batch_size=32,
+            class_mode='categorical'
+        )
+    except Exception as e:
+        print(f"Error in data loading or augmentation: {e}")
+        sys.exit(1)
+
     # MobileNetV2 Model as base model
     try:
         base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(64, 64, 3))
@@ -28,11 +57,12 @@ try:
         print(f"Error initializing MobileNetV2 base model: {e}")
         sys.exit(1)
 
+    # Setting up the transfer learning model
     try:
         x = base_model.output
         x = layers.GlobalAveragePooling2D()(x)
         x = layers.Dense(512, activation='relu')(x)
-        predictions = layers.Dense(4, activation='softmax')(x)
+        predictions = layers.Dense(train_generator.num_classes, activation='softmax')(x)
         transfer_model = models.Model(inputs=base_model.input, outputs=predictions)
     except Exception as e:
         print(f"Error setting up the transfer model: {e}")
