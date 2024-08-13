@@ -59,10 +59,15 @@ metadata:
   name: data-processing
   namespace: ml-app
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: data-processing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -82,10 +87,15 @@ metadata:
   name: model-training
   namespace: ml-app
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: model-training
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -105,10 +115,15 @@ metadata:
   name: inference
   namespace: ml-app
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: inference
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:

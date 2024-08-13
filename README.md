@@ -1,5 +1,4 @@
 # Readme file
-
 MODEL INPUT/OUTPUTS
 
 ## Training Pipeline
