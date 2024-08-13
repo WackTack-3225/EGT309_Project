@@ -1,0 +1,52 @@
+# Define the Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+
+---
+# Flask App Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: ml-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      chapter: flask
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        chapter: flask
+    spec:
+      containers:
+      - name: flask-container
+        image: edysontan/flask-app:latest
+        ports:
+        - containerPort: 5000 # set port 5000
+
+---
+# Flask app service
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+  namespace: ml-app
+  labels:
+    chapter: flask
+spec:
+  type: NodePort  # LoadBalancer for external
+  ports:
+  - protocol: TCP
+    port: 5000  # External port
+    targetPort: 5000  # Flask app port inside the container
+    nodePort: 30005
+  selector:
+    chapter: flask
