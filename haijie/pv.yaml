@@ -1,23 +1,23 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: model-training-pv
+  name: processed-data-pv  # Name of the Persistent Volume for processed data
 spec:
   capacity:
-    storage: 5Gi  # Adjust the size as needed
+    storage: 4Gi  # Adjust size based on your needs
   accessModes:
-    - ReadWriteMany
+    - ReadWriteMany  # Allows multiple Pods to read/write
   hostPath:
-    path: "/mnt/data"  # Path on the host machine
+    path: "/app/data_309"  # Path on the host machine where the processed data is stored
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: model-output-pv
+  name: saved-model-pv  # Name of the Persistent Volume for the saved model
 spec:
   capacity:
-    storage: 5Gi  # Adjust the size as needed
+    storage: 4Gi  # Adjust size based on your needs
   accessModes:
-    - ReadWriteMany
+    - ReadWriteMany  # Allows multiple Pods to read/write
   hostPath:
-    path: "/mnt/model_output"  # Path on the host machine
+    path: "/mnt/saved_model"  # Path on the host machine where the model will be saved

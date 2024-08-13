@@ -5,20 +5,19 @@ metadata:
 spec:
   containers:
   - name: model-training-container
-    image: 200iqkid/model_training:latest
-    command: ["python", "trainmodel.py"]
+    image: 200iqkid/model-training:latest
     volumeMounts:
-    - mountPath: /mnt/data
-      name: model-training-volume
-    - mountPath: /mnt/saved_model
-      name: model-output-volume
-    env:
-    - name: MODEL_SAVE_PATH
-      value: "/mnt/saved_model/trained_model"
+    - mountPath: "/app/data_309"  # Path inside the container for the processed data
+      name: processed-data-volume
+    - mountPath: '/mnt/saved_model' # Path inside the container where the model will be saved
+      name: saved-model-volume
   volumes:
-  - name: model-training-volume
+  - name: processed-data-volume
     persistentVolumeClaim:
-      claimName: model-training-pvc
-  - name: model-output-volume
+      claimName: processed-data-pvc
+  - name: saved-model-volume
     persistentVolumeClaim:
-      claimName: model-output-pvc
+      claimName: saved-model-pvc
+
+
+
