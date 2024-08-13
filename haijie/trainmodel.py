@@ -17,10 +17,15 @@ try:
         raise FileNotFoundError(f"Validation data directory not found: {validation_data_dir}")
 
     # Path to save the model
-    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model')
+    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model.h5')
 
     if not model_save_path:
         raise ValueError("MODEL_SAVE_PATH environment variable is not set or is empty.")
+    
+    # Ensure the directory exists where the model will be saved
+    model_save_dir = os.path.dirname(model_save_path)
+    if not os.path.exists(model_save_dir):
+        os.makedirs(model_save_dir)
 
     # Data generators for loading and augmenting the images
     try:

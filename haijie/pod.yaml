@@ -7,35 +7,17 @@ spec:
   - name: model-training-container
     image: 200iqkid/model-training:latest
     volumeMounts:
-    - mountPath: "/app/data_309"  # The path inside the container
+    - mountPath: "/app/data_309"  # Path inside the container for the processed data
       name: processed-data-volume
+    - mountPath: '/mnt/saved_model' # Path inside the container where the model will be saved
+      name: saved-model-volume
   volumes:
   - name: processed-data-volume
     persistentVolumeClaim:
       claimName: processed-data-pvc
----
-# apiVersion: v1
-# kind: Pod
-# metadata:
-#   name: trained-model-pod
-#   labels:
-#     app: trained-model
-# spec:
-#   containers:
-#   - name: trained-model-container
-#     image: 200iqkid/trained-model:latest
-#     volumeMounts:
-#     - mountPath: "/app/data_309"
-#       name: trained-model-volume
-#     env:
-#     - name: TRAIN_DIR
-#       value: "/app/data_309/train"
-#     - name: TEST_DIR
-#       value: "/app/data_309/test"
-#   volumes:
-#   - name: data-volume
-#     persistentVolumeClaim:
-#       claimName: data-pvc
-#   restartPolicy: Always
+  - name: saved-model-volume
+    persistentVolumeClaim:
+      claimName: saved-model-pvc
+
 
 
