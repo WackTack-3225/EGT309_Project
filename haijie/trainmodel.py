@@ -17,7 +17,7 @@ try:
         raise FileNotFoundError(f"Validation data directory not found: {validation_data_dir}")
 
     # Path to save the model
-    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model.h5')
+    model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model.keras')
 
     if not model_save_path:
         raise ValueError("MODEL_SAVE_PATH environment variable is not set or is empty.")
@@ -95,7 +95,7 @@ try:
     try:
         transfer_history = transfer_model.fit(
             train_generator,
-            epochs=30,  # Adjust the number of epochs as needed
+            epochs=1,  # Adjust the number of epochs as needed
             validation_data=validation_generator
         )
     except tf.errors.ResourceExhaustedError as e:

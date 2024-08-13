@@ -1,9 +1,21 @@
+# Define namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: model-training-pod
+  namespace: ml-app
 spec:
   containers:
+  - name: data-processing-container
+    image: jurnjie/data-processing:latest
+    volumeMounts:
+    - mountPath: "/app/data_309"
+      name: processed-data-volume
   - name: model-training-container
     image: 200iqkid/model-training:latest
     volumeMounts:

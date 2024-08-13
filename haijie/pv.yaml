@@ -2,6 +2,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: processed-data-pv  # Name of the Persistent Volume for processed data
+  namespace: ml-app
 spec:
   capacity:
     storage: 4Gi  # Adjust size based on your needs
@@ -9,11 +10,13 @@ spec:
     - ReadWriteMany  # Allows multiple Pods to read/write
   hostPath:
     path: "/app/data_309"  # Path on the host machine where the processed data is stored
+  persistentVolumeReclaimPolicy: Retain
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: saved-model-pv  # Name of the Persistent Volume for the saved model
+  namespace: ml-app
 spec:
   capacity:
     storage: 4Gi  # Adjust size based on your needs
@@ -21,3 +24,4 @@ spec:
     - ReadWriteMany  # Allows multiple Pods to read/write
   hostPath:
     path: "/mnt/saved_model"  # Path on the host machine where the model will be saved
+  persistentVolumeReclaimPolicy: Retain

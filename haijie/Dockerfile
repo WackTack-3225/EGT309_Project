@@ -8,7 +8,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy the processed data from the first stage
-COPY --from=data-stage /app/data_309 /app/data
+COPY --from=data-stage /app/data_309 /app/data_309
 
 # Copy the current directory contents into the container at /app
 COPY . /app
