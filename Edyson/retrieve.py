@@ -64,6 +64,7 @@ def load_model_from_path(models_path):
 # Flask route to handle image prediction
 @app.route('/predict', methods=['POST'])
 def predict():
+    return jsonify({"I got it"}), 200 
     log = get_log_file()
     log.write("--------------------------\n")
     log.write("Logging for inference pod\n")

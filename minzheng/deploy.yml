@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: flask-container
-        image: edysontan/flaskapp:latest
+        image: edysontan/flask-app:latest
         ports:
         - containerPort: 5000 # set port 5000
 
