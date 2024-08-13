@@ -9,8 +9,8 @@ from PIL import Image
 # Define paths from environment variables
 train_df = '/mnt/data/train'
 test_df = '/mnt/data/test'
-train_save_path = '/app/data_309/train_gen'
-test_save_path = '/app/data_309/test_gen'
+train_save_path = '/app/data_309/train'
+test_save_path = '/app/data_309/test'
 
 # Ensure the save directories exist
 os.makedirs(train_save_path, exist_ok=True)

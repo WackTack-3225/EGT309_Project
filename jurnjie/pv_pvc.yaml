@@ -26,7 +26,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: shared-data-pv
+  name: processed-data-volume
 spec:
   capacity:
     storage: 4Gi
@@ -39,7 +39,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: shared-data-pvc
+  name: processed-data-pvc
 spec:
   accessModes:
     - ReadWriteMany
