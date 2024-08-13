@@ -64,7 +64,6 @@ def load_model_from_path(models_path):
 # Flask route to handle image prediction
 @app.route('/predict', methods=['POST'])
 def predict():
-    return jsonify({"I got it"}), 200 
     log = get_log_file()
     log.write("--------------------------\n")
     log.write("Logging for inference pod\n")
@@ -124,6 +123,7 @@ def predict():
             log.write(f"{datetime.now()}: Model Predicted Successfully of class {predicted_class}\n")
         except Exception as e:
             print(f"Failed to predict image. Error: {e}")
+            log.write(f"{datetime.now()}: Failed to predict image. Error: {e}\n")
             continue
 
     # Closing logs

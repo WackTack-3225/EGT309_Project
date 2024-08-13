@@ -82,7 +82,7 @@ def inference():
         image_data = base64.b64encode(file.read()).decode('utf-8')
 
         # Append the Base64 encoded image data to the list
-        images_data.append({'image': 'image_data'})
+        images_data.append({'image': image_data})
 
     # Create a JSON payload
     json_payload = {
@@ -107,7 +107,6 @@ def forward_to_inference_pod(json_payload):
         # Send the JSON data to the inference pod
         response = requests.post(INF_POD_URL, json=json_payload)
         
-        return (response.json())
         if response.status_code == 200:  # Expecting status 200 with data
             return response.json()  # Assuming the response is a list of results
         else:

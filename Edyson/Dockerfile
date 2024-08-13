@@ -16,4 +16,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 
 # Run your Python script
-CMD ["python", "retrieve.py"]
+CMD ["python", "predict.py"]

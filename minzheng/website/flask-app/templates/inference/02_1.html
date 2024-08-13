@@ -120,7 +120,7 @@
     <div class="container">
         <h1>Upload Images and Trigger Inference</h1>
         <form id="imageForm" enctype="multipart/form-data">
-            <input type="file" name="image" id="imageInput" class="input-file" accept="image/*" multiple required>
+            <input type="file" name="image" id="imageInput" class="input-file" accept="image/jpeg" multiple required>
             <div id="image-preview-container"></div>
             <button type="button" id="remove-button" class="button">Remove All Images</button>
             <input type="submit" class="button" value="Upload Images and Trigger Inference">
@@ -212,7 +212,7 @@
                 document.getElementById('response-container').textContent = JSON.stringify(data);
 
                 // Navigate to the results page
-                // window.location.href = '/inference_page_2'; 
+                window.location.href = '/inference_page_2'; 
             })
             .catch(error => {
                 console.error('Error:', error);

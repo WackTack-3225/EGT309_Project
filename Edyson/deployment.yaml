@@ -79,7 +79,7 @@ metadata:
   name: inference    # Name of Deployment
   namespace: ml-app  # The namespace in which the Deployment is created
 spec:
-  replicas: 1        # Number of pod replicas that should be running at all times
+  replicas: 3        # Number of pod replicas that should be running at all times
   revisionHistoryLimit: 8  # Retain the last 8 ReplicaSets for rollback (decreased from default) ensuring enough versions are kept for rollback without bloating
   minReadySeconds: 15 # Giving 15 seconds buffer time for pod to stabilize after being ready before being able to recieve traffic (Means pod marked as ready need state read for 15 seconds before being considered available to recieve traffic)
   # It in turns tells kubernetes that replica needs to run for 10 seconds before update/replace of next one in sequence
