@@ -13,7 +13,8 @@ metadata:
   namespace: ml-app
 data:
   DP_POD_URL: "http://processing-service:84/start-processing"
-  MODEL_TRAINING_URL: "http://inference-pod/get-model-info"
+  MOD_TRG_URL: "http://inference-pod/get-model-info" # change this
+  RESULTS_URL: "http://inference-pod/get-model-info" # change this
   INF_POD_URL: "http://inference-service:83/predict"
 
 ---
@@ -52,11 +53,16 @@ spec:
             configMapKeyRef:
               name: flask-url
               key: INF_POD_URL
-        - name: MODEL_TRAINING_URL
+        - name: MOD_TRG_URL
           valueFrom:
             configMapKeyRef:
               name: flask-url
-              key: MODEL_TRAINING_URL
+              key: MOD_TRG_URL
+        - name: RESULTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: flask-url
+              key: RESULTS_URL
         ports:
         - containerPort: 5000 # set port 5000
 

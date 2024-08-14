@@ -26,6 +26,7 @@
             background-color: #007bff;
             color: white;
             border-radius: 5px;
+            display: inline-block;
         }
         .button:hover {
             background-color: #0056b3;
@@ -45,79 +46,112 @@
             color: red;
             font-weight: bold;
         }
+        .button-container {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Model Training Status</h1>
         <div class="loading">Loading... Please wait.</div>
-        <div class="result">
-            <p><strong>Model Accuracy:</strong> <span id="modelAccuracy"></span></p>
-            <p><strong>Model Validation Accuracy:</strong> <span id="modelValAccuracy"></span></p>
-            <p><strong>Model Parameters:</strong> <span id="modelParameters"></span></p>
-        </div>
+        <div class="message" style="display: none;"></div>
         <div class="error" id="error">An error occurred during the process. Please try again later.</div>
-        <button class="button" onclick="startTraining()">Start Training</button>
+        
+        <!-- Button container to hold buttons and ensure correct positioning -->
+        <div class="button-container">
+            <button class="button" onclick="startTraining()">Start Training</button>
+            <button class="button next-page-button" style="display: none;" onclick="goToResults()">Go to Results</button>
+        </div>
     </div>
     <div id="result"></div>
-
 
     <script>
         function startTraining() {
             // Show loading screen
             document.querySelector('.loading').style.display = 'block';
             document.querySelector('.error').style.display = 'none';
-            document.querySelector('.result').style.display = 'none';
+            document.querySelector('.button-container').style.display = 'none'; // Hide the button container
 
-            // Send POST request to start training first
+            // Send POST request to start training
             fetch('/process', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    payload: 100
+                    payload: 100 // replace or remove as needed
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                // If training started successfully, fetch the model results
-                if (data.success) {
-                    return fetch('/results', { 
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            payload: 100
-                        })
-                    });
-                } else {
+            .then(response => {
+                if (!response.ok) { 
                     throw new Error('Training did not start successfully');
                 }
+                // Proceed to send a second POST request to /process_model
+                return fetch('/process_model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: 'start_training'
+                    })
+                });
             })
-            .then(response => response.json())
-            .then(data => {
-                // Stop loading screen
-                document.querySelector('.loading').style.display = 'none';
-
-                if (data.success) {
-                    // Display model accuracy and parameters
-                    document.getElementById('modelAccuracy').textContent = data.accuracy;
-                    document.getElementById('modelValAccuracy').textContent = data.val_acc;
-                    document.getElementById('modelParameters').textContent = data.parameters;
-                    document.querySelector('.result').style.display = 'block';
-                } else {
-                    throw new Error('Failed to retrieve model data');
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to start model training');
                 }
+                // Model training has started successfully
+                document.querySelector('.loading').style.display = 'none';
+                document.querySelector('.message').innerText = 'Model training has started successfully!';
+                document.querySelector('.message').style.display = 'block'; // Display confirmation message
+
+                // Show the button that links to another page
+                document.querySelector('.next-page-button').style.display = 'block';
+                document.querySelector('.button-container').style.display = 'block'; // Show the button container
             })
             .catch(error => {
                 console.error('Error:', error);
                 // Stop loading screen and show error message
                 document.querySelector('.loading').style.display = 'none';
                 document.querySelector('.error').style.display = 'block';
+                document.querySelector('.button-container').style.display = 'block'; // Show the button container again
             });
-    }
-</script>
+        }
+
+        function goToResults() {
+            // Show loading screen while waiting for response
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.error').style.display = 'none';
+            document.querySelector('.button-container').style.display = 'none'; // Hide the button container
+
+            // Send POST request to check if training is finished
+            fetch('/training-finished', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    check_status: true // change this
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Store the data in session storage
+                sessionStorage.setItem('training_results', JSON.stringify(data));
+
+                // Redirect to the results page
+                window.location.href = '/results_page';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Stop loading screen and show error message
+                document.querySelector('.loading').style.display = 'none';
+                document.querySelector('.error').style.display = 'block';
+                document.querySelector('.button-container').style.display = 'block'; // Show the button container again
+            });
+        }
+    </script>
 </body>
 </html>
