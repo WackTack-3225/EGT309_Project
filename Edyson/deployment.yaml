@@ -42,7 +42,7 @@ spec:
     app: inference         # Labels used to identify the pods this Service targets
   ports:
   - protocol: TCP          # The protocol for the port (usually TCP)
-    port: 80               # The port that the Service exposes to the outside world
+    port: 83               # The port that the Service exposes to the outside world
     targetPort: 8083       # The port on the pod/container that the Service forwards traffic to
   type: ClusterIP          # The type of Service; ClusterIP means it's accessible only within the cluster
 

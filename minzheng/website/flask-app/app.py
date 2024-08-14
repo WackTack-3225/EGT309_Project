@@ -35,11 +35,10 @@ def start_training():
         DP_POD_URL = os.getenv("DP_POD_URL")
 
         response = requests.post(DP_POD_URL)
-        return jsonify(response)
-        #if response.status_code == 200 and response.json() == {"status": "Processing completed"} :
-        #    return jsonify({"success": True}), 200
-        #else:
-        #    return jsonify({"success": False, "error": "Training pipeline failed"}), 500
+        if response.status_code == 200:
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"success": False, "error": "Training pipeline failed"}), 500
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
