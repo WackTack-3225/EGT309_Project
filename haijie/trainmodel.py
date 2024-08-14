@@ -111,7 +111,7 @@ def run_training_and_notify():
         # Modify input shape and classifier layers
         x = base_model.output
         x = layers.GlobalAveragePooling2D()(x)
-        x = layers.Dense(32, activation='relu')(x)
+        x = layers.Dense(2, activation='relu')(x)
         predictions = layers.Dense(4, activation='softmax')(x)
         transfer_model = models.Model(inputs=base_model.input, outputs=predictions)
 
