@@ -44,10 +44,10 @@ def start_training():
         return jsonify({"success": False, "error": str(e)}), 500
 
 # Endpoint to get model accuracy and parameters
-@app.route('/results', methods=['GET'])
+@app.route('/results', methods=['POST'])
 def get_model_info():
     try:
-        # Send POST request to inference pod to retrieve model data
+        # Send POST request to model training pod to retrieve model data
         MODEL_TRAINING_URL = os.getenv("MODEL_TRAINING_URL")
         response = requests.post(MODEL_TRAINING_URL, json=request.json)
 
@@ -56,6 +56,7 @@ def get_model_info():
             return jsonify({
                 "success": True,
                 "accuracy": data.get('accuracy'),
+                "val_acc": data.get('val_acc'),
                 "parameters": data.get('parameters')
             }), 200
         else:
@@ -85,7 +86,7 @@ def inference():
     # Create a JSON payload
     json_payload = {
         'images': images_data,
-        'payload': 200  # Add any additional data you need
+        'payload': 200  
     }
 
     # Forward all images and the payload to the data processing pod

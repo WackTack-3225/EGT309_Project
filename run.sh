@@ -1,24 +1,24 @@
 #!/bin/bash
 
 # Handle minikube processess (assuming is downloaded)
-minikube delete
-minikube start
-eval $(minikube docker-env)
+minikube delete # reset environment
+minikube start # begin environment
+eval $(minikube docker-env) # enable docker commands
 
 
 # Run the deployment file
 kubectl apply -f deployment.yml 
 
-# Run container specific processes (if needed)
+# Run container specific processes
 
 # build flask 
-docker pull wacktack/flask-app:latest
+docker pull wacktack/flask-app
 # build data processing
-docker pull jurnjie/data-processing:latest
+docker pull jurnjie/data-processing
 # build model training
-docker pull 200iqkid/model-training:latest
+docker pull 200iqkid/model-training
 # build inference
-docker pull edysontan/inference:latest
+docker pull edysontan/inference
 
 
 # Return the url of the website

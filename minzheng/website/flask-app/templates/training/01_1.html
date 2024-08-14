@@ -53,6 +53,7 @@
         <div class="loading">Loading... Please wait.</div>
         <div class="result">
             <p><strong>Model Accuracy:</strong> <span id="modelAccuracy"></span></p>
+            <p><strong>Model Validation Accuracy:</strong> <span id="modelValAccuracy"></span></p>
             <p><strong>Model Parameters:</strong> <span id="modelParameters"></span></p>
         </div>
         <div class="error" id="error">An error occurred during the process. Please try again later.</div>
@@ -68,7 +69,7 @@
             document.querySelector('.error').style.display = 'none';
             document.querySelector('.result').style.display = 'none';
 
-            // Send POST request to start training
+            // Send POST request to start training first
             fetch('/process', {
                 method: 'POST',
                 headers: {
@@ -80,30 +81,42 @@
             })
             .then(response => response.json())
             .then(data => {
-            if (data) {
-                document.getElementById('result').innerText = JSON.stringify(data);
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Stop loading screen
-            document.querySelector('.loading').style.display = 'none';
+                // If training started successfully, fetch the model results
+                if (data.success) {
+                    return fetch('/results', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payload: 100
+                        })
+                    });
+                } else {
+                    throw new Error('Training did not start successfully');
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Stop loading screen
+                document.querySelector('.loading').style.display = 'none';
 
-            if (data.success) {
-                // Display model accuracy and parameters
-                document.getElementById('modelAccuracy').textContent = data.accuracy;
-                document.getElementById('modelParameters').textContent = data.parameters;
-                document.querySelector('.result').style.display = 'block';
-            } else {
-                throw new Error('Failed to retrieve model data');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // Stop loading screen and show error message
-            document.querySelector('.loading').style.display = 'none';
-            document.getElementById('error').style.display = 'block';
-        });
+                if (data.success) {
+                    // Display model accuracy and parameters
+                    document.getElementById('modelAccuracy').textContent = data.accuracy;
+                    document.getElementById('modelValAccuracy').textContent = data.val_acc;
+                    document.getElementById('modelParameters').textContent = data.parameters;
+                    document.querySelector('.result').style.display = 'block';
+                } else {
+                    throw new Error('Failed to retrieve model data');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Stop loading screen and show error message
+                document.querySelector('.loading').style.display = 'none';
+                document.querySelector('.error').style.display = 'block';
+            });
     }
 </script>
 </body>

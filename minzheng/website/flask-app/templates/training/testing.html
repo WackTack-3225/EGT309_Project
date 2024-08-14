@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Pipeline Status</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+        .button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            display: none;
+            font-size: 18px;
+            color: #555;
+        }
+        .form-container {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .result {
+            display: none;
+            margin-top: 20px;
+        }
+        .error {
+            display: none;
+            margin-top: 20px;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Model Training Status</h1>
+        <div class="loading">Loading... Please wait.</div>
+        <div class="form-container" id="form-container">
+            <h3>Model Parameters</h3>
+            <label for="learningRate">Learning Rate:</label>
+            <select id="learningRate" name="learning_rate" required>
+                <option value="1e-4">0.0001</option>
+                <option value="2e-4">0.0002</option>
+                <option value="3e-4">0.0003</option>
+                <option value="1e-5">0.00001</option>
+                <option value="2e-5">0.00002</option>
+                <option value="3e-5">0.00003</option>
+            </select>
+
+            <label for="freezeTopLayer">Freeze Top Layer:</label>
+            <select id="freezeTopLayer" name="freeze_top_layer" required>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+
+            <label for="freezeBottomLayers">Freeze Bottom Layers:</label>
+            <select id="freezeBottomLayers" name="freeze_bottom_layers" required>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+
+            <label for="denseUnits">Dense Units:</label>
+            <select id="denseUnits" name="dense_units" required>
+                <option value="128">128</option>
+                <option value="256">256</option>
+                <option value="512">512</option>
+                <option value="1024">1024</option>
+            </select>
+
+            <label for="numEpochs">Number of Epochs:</label>
+            <select id="numEpochs" name="num_epochs" required>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+            </select>
+
+            <button class="button" onclick="startModelTraining()">Start Model Training</button>
+        </div>
+        <div class="result">
+            <p><strong>Model Accuracy:</strong> <span id="modelAccuracy"></span></p>
+            <p><strong>Validation Accuracy:</strong> <span id="valAccuracy"></span></p>
+            <p><strong>Loss:</strong> <span id="loss"></span></p>
+            <p><strong>Validation Loss:</strong> <span id="valLoss"></span></p>
+            <p><strong>Selected Parameters:</strong> <span id="selectedParameters"></span></p>
+        </div>
+        <div class="error" id="error">An error occurred during the process. Please try again later.</div>
+        <button class="button" onclick="startDataProcessing()">Start Data Processing</button>
+    </div>
+
+    <script>
+        function startDataProcessing() {
+            // Show loading screen
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.error').style.display = 'none';
+            document.querySelector('.result').style.display = 'none';
+            document.getElementById('form-container').style.display = 'none';
+
+            // Send POST request to data processing pod
+            fetch('/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    payload: 100
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Stop loading screen
+                document.querySelector('.loading').style.display = 'none';
+
+                if (data.success) {
+                    // Display form for model parameters
+                    document.getElementById('form-container').style.display = 'block';
+                } else {
+                    throw new Error('Failed to process data');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Stop loading screen and show error message
+                document.querySelector('.loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            });
+        }
+
+        function startModelTraining() {
+            // Show loading screen
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.error').style.display = 'none';
+            document.querySelector('.result').style.display = 'none';
+
+            // Collect form data
+            const formData = {
+                learning_rate: document.getElementById('learningRate').value,
+                freeze_top_layer: document.getElementById('freezeTopLayer').checked,
+                freeze_bottom_layers: document.getElementById('freezeBottomLayers').checked,
+                dense_units: document.getElementById('denseUnits').value,
+                num_epochs: document.getElementById('numEpochs').value
+            };
+
+            // Send POST request to model training pod
+            fetch('/train', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Stop loading screen
+                document.querySelector('.loading').style.display = 'none';
+
+                if (data.success) {
+                    // Display model results and selected parameters
+                    document.getElementById('modelAccuracy').textContent = data.accuracy;
+                    document.getElementById('valAccuracy').textContent = data.val_accuracy;
+                    document.getElementById('loss').textContent = data.loss;
+                    document.getElementById('valLoss').textContent = data.val_loss;
+                    document.getElementById('selectedParameters').textContent = JSON.stringify(formData, null, 2);
+                    document.querySelector('.result').style.display = 'block';
+                } else {
+                    throw new Error('Failed to retrieve model results');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Stop loading screen and show error message
+                document.querySelector('.loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>
