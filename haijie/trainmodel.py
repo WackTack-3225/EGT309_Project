@@ -18,15 +18,21 @@ app = Flask(__name__)
 
 @app.route('/train', methods=['POST'])
 def train():
-    data = request.get_json()
+    # Retrieve the status code from the request headers
+    status_code = request.headers.get('Status-Code', type=int)  # Typecast to int
 
     # Extract the payload from the request
     data = request.get_json()
-    value = data.get('payload') # dummy code for parameter retrieval from website
 
-    # Check if the payload value is 101
-    if value != 101:
-        return jsonify({"error": "Invalid payload value. Expected 101."}), 400
+    # Check if the JSON is present
+    if not data:
+        return jsonify({"error": "Missing or invalid JSON payload."}), 400
+    
+    value = data.get('payload')  # Extract the value from JSON, dummy code for model parameters
+
+    # Check if the status code is 200
+    if status_code != 200:
+        return jsonify({"error": "Invalid status code. Expected 200."}), 400
     
     # main model training section
     try:
