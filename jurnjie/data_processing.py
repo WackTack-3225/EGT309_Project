@@ -55,15 +55,12 @@ def save_images_from_generator(generator, save_path):
             img.save(os.path.join(class_dir, f'image_{batch_index * generator.batch_size + i}.png'))
 
 # Route to start image processing
-@app.route('/start-processing', methods=['GET'])
+@app.route('/start-processing', methods=['POST'])
 def start_processing():
     save_images_from_generator(train_generator, train_save_path)
     save_images_from_generator(validation_generator, test_save_path)
     return jsonify({"status": "Processing completed"}), 200
 
-@app.route('/status', methods=['GET'])
-def status():
-    return jsonify({"status": "Service is running"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8084)
