@@ -42,6 +42,8 @@ def run_training_and_notify():
         # Define the paths to the training and validation data
         train_data_dir = '/app/data/train'
         validation_data_dir = '/app/data/test'
+        with open('/app/error_log.txt', "a") as log:
+            log.write("Threading start\n")
 
         # Ensure the directories exist
         if not os.path.exists(train_data_dir):
@@ -65,6 +67,8 @@ def run_training_and_notify():
         print("Checking validation data directory...")
         check_images_in_directory(validation_data_dir)
 
+        with open('/app/error_log.txt', "a") as log:
+            log.write("Validate train and validation paths\n")
 
 
         # Load the training and validation data
@@ -97,6 +101,9 @@ def run_training_and_notify():
             os.makedirs(model_save_dir)
 
 
+        with open('/app/error_log.txt', "a") as log:
+            log.write("Create and validate model saving path\n")
+
         # MobileNetV2 Model as base model
         base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(64, 64, 3))
 
@@ -116,6 +123,8 @@ def run_training_and_notify():
         for layer in transfer_model.layers[10:]:
             layer.trainable = True
 
+        with open('/app/error_log.txt', "a") as log:
+            log.write("Defining of model\n")
 
         # Compiling the model
         transfer_model.compile(
@@ -143,6 +152,8 @@ def run_training_and_notify():
         except Exception as e:
             print(f"An error occurred during model training: {e}")
 
+        with open('/app/error_log.txt', "a") as log:
+            log.write("Completed training of model\n")
 
         # Saving the trained model
         try:
