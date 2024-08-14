@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-training-deployment
+  namespace: ml-app
+spec:
+  replicas: 3  # Number of pod replicas
+  selector:
+    matchLabels:
+      app: model-training
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: model-training
+    spec:
+      containers:
+      - name: model-training # model training code
+        image: 200iqkid/model-training:latest # hai jie's image
+        volumeMounts:
+        - mountPath: "/app/data"  # to modify
+          name: processed-data-pv
+        - mountPath: '/mnt/saved_model'  # to modify
+          name: saved-model-volume
+
+      volumes:
+      - name: processed-data-pv # jurn jie's volume claim
+        persistentVolumeClaim:
+          claimName: processed-data-pvc
+      - name: saved-model-volume # hai jie'svolume claim
+        persistentVolumeClaim:
+          claimName: saved-model-pvc
+
+---
+# PV for saved model
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: saved-model-pv  # Name of the Persistent Volume for the saved model
+  namespace: ml-app
+spec:
+  capacity:
+    storage: 4Gi  
+  accessModes:
+    - ReadWriteMany  
+  hostPath:
+    path: "/mnt/saved_model"  # Path on the host machine where the model will be saved
+  persistentVolumeReclaimPolicy: Retain
+
+
+---
+# PVC for saved model
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saved-model-pvc  # Name of the PVC that will request the saved model volume
+  namespace: ml-app  
+spec:
+  accessModes:
+    - ReadWriteOnce  
+  resources:
+    requests:
+      storage: 4Gi  
+
+---
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: model-training-service  # http://model-training-service/train **
+  namespace: ml-app
+spec:
+  selector:
+    app: model-training         # Labels used to identify the pods this Service targets
+  ports:
+  - protocol: TCP          # The protocol for the port (usually TCP)
+    port: 82               # The port that the Service exposes to the outside world
+    targetPort: 8082       # The port on the pod/container that the Service forwards traffic to
+  type: ClusterIP          # The type of Service; ClusterIP means it's accessible only within the cluster
