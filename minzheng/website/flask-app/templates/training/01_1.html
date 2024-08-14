@@ -58,6 +58,8 @@
         <div class="error" id="error">An error occurred during the process. Please try again later.</div>
         <button class="button" onclick="startTraining()">Start Training</button>
     </div>
+    <div id="result"></div>
+
 
     <script>
         function startTraining() {
@@ -78,19 +80,8 @@
             })
             .then(response => response.json())
             .then(data => {
-            if (data.success) {
-                // Training started successfully, now send POST request to retrieve model accuracy and parameters
-                return fetch('/results', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        payload: 100  // Adjust this payload as needed
-                    })
-                });
-            } else {
-                throw new Error('Training pipeline failed');
+            if (data) {
+                document.getElementById('result').innerText = JSON.stringify(data);
             }
         })
         .then(response => response.json())
