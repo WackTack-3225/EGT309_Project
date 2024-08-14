@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Handle minikube processess (assuming is downloaded)
 minikube delete
 minikube start
@@ -12,15 +11,15 @@ kubectl apply -f deployment.yml
 
 # Run container specific processes (if needed)
 
-# build docker containers (as they do not run for some reason)
-cd minzheng/website
+# build flask 
+docker pull wacktack/flask-app:latest
+# build data processing
+docker pull jurnjie/data-processing:latest
+# build model training
+docker pull 200iqkid/model-training:latest
+# build inference
+docker pull edysontan/inference:latest
 
 
-
-
-
-
-
-
-
-# Return the url of the website!
+# Return the url of the website
+minikube service flask-app-service -n ml-app --url
