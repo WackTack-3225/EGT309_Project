@@ -11,7 +11,7 @@ RUN pip install --upgrade pip
 # Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY data_309 /mnt/data
+COPY 309_data /mnt/data
 
 COPY . /app
 # Set environment variables to prevent Python from buffering stdout/stderr
