@@ -12,17 +12,17 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')  
 
-# Define routing for TRAIN
+# Define routing for TRAIN_1
 @app.route('/training_page')
 def training_route():
     return render_template('training/01_1.html')  
 
-# Define routing for INFERENCE
+# Define routing for INFERENCE_1
 @app.route('/inference_page')
 def inference_route():
     return render_template('inference/02_1.html')  
 
-# Define routing for INFERENCE
+# Define routing for INFERENCE_2
 @app.route('/inference_page_2')
 def inference_route_2():
     return render_template('inference/02_2.html')  
@@ -32,7 +32,7 @@ def inference_route_2():
 def start_training():
     try:
         # Send POST request to data processing pod to start the training
-        DP_POD_URL = "http://data-processing-pod/start-training"  # Replace with the actual URL of your data processing pod
+        DP_POD_URL = os.getenv("DP_POD_URL")
         payload = request.json
 
         response = requests.post(DP_POD_URL, json=payload)
@@ -50,8 +50,8 @@ def start_training():
 def get_model_info():
     try:
         # Send POST request to inference pod to retrieve model data
-        inference_pod_url = "http://inference-pod/get-model-info"  # Replace with the actual URL of your inference pod
-        response = requests.post(inference_pod_url, json=request.json)
+        INFERENCE_POD_URL = os.getenv("INFERENCE_POD_URL")
+        response = requests.post(INFERENCE_POD_URL, json=request.json)
 
         if response.status_code == 200 and response.json().get('success'):
             data = response.json()
@@ -101,7 +101,7 @@ def inference():
     return jsonify(inference_results),200
 
 def forward_to_inference_pod(json_payload):
-    INF_POD_URL = "http://inference-service/predict"  # Replace with your pod's URL
+    INF_POD_URL = os.getenv("INF_POD_URL")
 
     try:
         # Send the JSON data to the inference pod
@@ -116,7 +116,6 @@ def forward_to_inference_pod(json_payload):
         return {"error": f"Failed to reach data processing pod: {e}"}
 
 # Inference END
-# INFERENCE SKELETON WORKING COMPLETELY, DO NOT MODIFY - 12/8/2024
 
 
 if __name__ == '__main__':
