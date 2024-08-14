@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,12 +56,12 @@
         <h1>Model Training Status</h1>
         <div class="loading">Loading... Please wait.</div>
         <div class="message" style="display: none;"></div>
-        <div class="error" id="error">An error occurred during the process. Please try again later.</div>
+        <div class="error" id="error"></div>
         
         <!-- Button container to hold buttons and ensure correct positioning -->
         <div class="button-container">
-            <button class="button" onclick="startTraining()">Start Training</button>
-            <button class="button next-page-button" style="display: none;" onclick="goToResults()">Go to Results</button>
+            <button class="button start-training-button" onclick="startTraining()">Start Training</button>
+            <button class="button next-page-button" onclick="goToResults()">Go to Results</button>
         </div>
     </div>
     <div id="result"></div>
@@ -78,33 +77,37 @@
             fetch('/process', {
                 method: 'POST'
             })
-            .then(response => {
-                if (!response.ok) { 
-                    throw new Error('Training did not start successfully');
-                }
+            .then(response => response.json()) // removed validation here
+            .then(data => { // removed validation here
                 // Proceed to send a second POST request to /process_model
                 return fetch('/process_model', {
                     method: 'POST'
                 });
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to start model training');
-                }
                 // Model training has started successfully
                 document.querySelector('.loading').style.display = 'none';
                 document.querySelector('.message').innerText = 'Model training has started successfully!';
                 document.querySelector('.message').style.display = 'block'; // Display confirmation message
 
-                // Show the button that links to another page
-                document.querySelector('.next-page-button').style.display = 'block';
-                document.querySelector('.button-container').style.display = 'block'; // Show the button container
+                // Pause execution for 5 seconds before showing the next-page-button
+                setTimeout(() => {
+                    // Hide the Start Training button
+                    document.querySelector('.start-training-button').style.display = 'none';
+
+                    // Show the Go to Results button
+                    document.querySelector('.next-page-button').style.display = 'block';
+                    document.querySelector('.button-container').style.display = 'block'; // Show the button container
+                }, 5000); // 5 seconds
             })
             .catch(error => {
                 console.error('Error:', error);
                 // Stop loading screen and show error message
                 document.querySelector('.loading').style.display = 'none';
-                document.querySelector('.error').style.display = 'block';
+                // Display an error message inside the error div
+                const errorDiv = document.querySelector('.error');
+                errorDiv.innerText = 'An error occurred: ' + error.message; // or a custom error message
+                errorDiv.style.display = 'block';
                 document.querySelector('.button-container').style.display = 'block'; // Show the button container again
             });
         }
@@ -116,22 +119,23 @@
             document.querySelector('.button-container').style.display = 'none'; // Hide the button container
 
             // Send POST request to check if training is finished
-            fetch('/training-finished', {
+            fetch('/training_finished', {
                 method: 'POST'
             })
-            .then(response => response.json())
-            .then(data => {
-                // Store the data in session storage
+            .then(response => response.json()) // no error validaiton
+            .then(data => { // this is for data
                 sessionStorage.setItem('training_results', JSON.stringify(data.data));
 
-                // Redirect to the results page
-                window.location.href = '/results_page';
+                window.location.href = '/results_page'; 
             })
             .catch(error => {
                 console.error('Error:', error);
                 // Stop loading screen and show error message
                 document.querySelector('.loading').style.display = 'none';
-                document.querySelector('.error').style.display = 'block';
+                // Display an error message inside the error div
+                const errorDiv = document.querySelector('.error');
+                errorDiv.innerText = 'An error occurred: ' + error.message; // or a custom error message (error.message)
+                errorDiv.style.display = 'block';
                 document.querySelector('.button-container').style.display = 'block'; // Show the button container again
             });
         }

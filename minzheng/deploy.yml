@@ -13,8 +13,8 @@ metadata:
   namespace: ml-app
 data:
   DP_POD_URL: "http://processing-service:84/start-processing" # WORKING
-  MODEL_TRAINING_URL: "http://model-training-service:85/train" # SET TO CORRECT (?)
-  RESULTS_URL: "http://model-training-service:85/results" # SET TO CORRECT(?)
+  MODEL_TRAINING_URL: "http://model-training-service:82/train" # SET TO CORRECT (?)
+  RESULT_URL: "http://model-training-service:82/results" # SET TO CORRECT(?)
   INF_POD_URL: "http://inference-service:83/predict" # WORKING
 
 ---
@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: flask-container
-        image: edysontan/flask-app:latest # pull from flask-app image
+        image: wacktack/flask-app:latest # pull from flask-app image
         env: # to get Config map variables
         - name: DP_POD_URL
           valueFrom:
@@ -53,11 +53,11 @@ spec:
             configMapKeyRef:
               name: flask-url
               key: MODEL_TRAINING_URL
-        - name: RESULTS_URL
+        - name: RESULT_URL
           valueFrom:
             configMapKeyRef:
               name: flask-url
-              key: RESULTS_URL
+              key: RESULT_URL
         - name: INF_POD_URL
           valueFrom:
             configMapKeyRef:
@@ -81,5 +81,6 @@ spec:
   - protocol: TCP
     port: 5000  # Exposed port
     targetPort: 5000  # Flask app port inside the container
+    nodePort: 30005
   selector:
     chapter: flask # applies to selected chapter: flask

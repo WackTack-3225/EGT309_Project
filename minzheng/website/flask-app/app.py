@@ -19,7 +19,7 @@ def training_route():
 
 # Define routing for RESULTS_1
 @app.route('/results_page')
-def training_route():
+def training_route_2():
     return render_template('training/01_2.html')  
 
 # Define routing for INFERENCE_1
@@ -54,9 +54,9 @@ def start_training():
 def do_training():
     try:
         # Send POST request to data processing pod to start the training
-        MOD_TRG_URL = os.getenv("MOD_TRG_URL")
+        MODEL_TRAINING_URL = os.getenv("MODEL_TRAINING_URL")
 
-        response = requests.post(MOD_TRG_URL)
+        response = requests.post(MODEL_TRAINING_URL), 200
         if response.status_code == 200:
             return jsonify({"success": True}), 200
         else:
@@ -66,18 +66,22 @@ def do_training():
         return jsonify({"success": False, "error": str(e)}), 500
 
 # ENDPOINT TO GET MODEL RESULTS
-@app.route('/training-finished', methods=['POST'])
+@app.route('/training_finished', methods=['POST'])
 def training_complete():
     try:
         RESULT_URL = os.getenv("RESULT_URL")
 
-        response = requests.post(RESULT_URL)
-        if response.status_code == 200:
-            return jsonify({"success": True, "data": response.json()}), 200
+        response = requests.post(RESULT_URL), 200
+        if response.status_code == 200: # CRITICAL FAILURE HERE, JSON FILE UNRETRIEVABLE?
+            result_data = response.json()
+            # validation was supposed to go here
+            return jsonify({"data": result_data}), 200
         
         if response.status_code == 400:
             return jsonify({"success": False, "error": "File not found, model not finished training"}), 400
-
+        
+        else:
+            jsonify({"success": False, "error": str(e)}), 500
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
