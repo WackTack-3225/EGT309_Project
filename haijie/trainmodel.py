@@ -90,7 +90,7 @@ def run_training_and_notify():
 
 
         # Path to save the model
-        model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model.keras')
+        model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model')
 
         if not model_save_path:
             raise ValueError("MODEL_SAVE_PATH environment variable is not set or is empty.")
@@ -111,7 +111,7 @@ def run_training_and_notify():
         # Modify input shape and classifier layers
         x = base_model.output
         x = layers.GlobalAveragePooling2D()(x)
-        x = layers.Dense(512, activation='relu')(x)
+        x = layers.Dense(32, activation='relu')(x)
         predictions = layers.Dense(4, activation='softmax')(x)
         transfer_model = models.Model(inputs=base_model.input, outputs=predictions)
 
@@ -142,7 +142,7 @@ def run_training_and_notify():
         try:
             transfer_history = transfer_model.fit(
                 train_dataset,
-                epochs=2,  # Adjust the number of epochs as needed
+                epochs=1,  # Adjust the number of epochs as needed
                 validation_data=validation_dataset,
                 callbacks=[early_stopping]
             )
@@ -157,7 +157,13 @@ def run_training_and_notify():
 
         # Saving the trained model
         try:
-            transfer_model.save(model_save_path)
+            
+            # Append the model file name to the save path
+            full_model_save_path = os.path.join(model_save_path, 'trainedmodel.h5')
+    
+            # Save the model
+            transfer_model.save(full_model_save_path)
+
             print(f"Model saved to {model_save_path}")
         except Exception as e:
             print(f"An error occurred while saving the model: {e}")
@@ -180,7 +186,7 @@ def run_training_and_notify():
             "val_loss": training_metrics["val_loss"],
             "parameters": training_metrics["parameters"]
         }
-        print(response)
+        log.write(str(response) + "\n")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         with open('/app/error_log.txt', "a") as log:

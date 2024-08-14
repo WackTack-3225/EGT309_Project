@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: train-config
 data:
-  MODEL_SAVE_PATH: "/mnt/model_training/saved_model/trained_model"
+  MODEL_SAVE_PATH: "/mnt/saved_model"
