@@ -9,7 +9,7 @@ metadata:
   name: model-training-deployment
   namespace: ml-app
 spec:
-  replicas: 3  # Number of pod replicas
+  replicas: 1  # Number of pod replicas
   selector:
     matchLabels:
       app: model-training
