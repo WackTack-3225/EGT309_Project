@@ -6,6 +6,7 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping
+from threading import Thread
 
 
 from flask import Flask, request, jsonify, render_template
@@ -24,7 +25,18 @@ def train():
     # Check if the status code is 200
     if status_code != 200:
         return jsonify({"error": "Invalid status code. Expected 200."}), 400
+
+    # Start the training process in a new thread
+    thread = Thread(target=run_training_and_notify)
+    thread.start()
+
+    # Immediately return a response indicating that training has started
+    return jsonify({"status": "Training started"}), 200
     
+
+
+
+def run_training_and_notify():
     # main model training section
     try:
         # Define the paths to the training and validation data
@@ -127,11 +139,9 @@ def train():
             )
         except tf.errors.ResourceExhaustedError as e:
             print(f"Resource Exhausted Error during training: {e}")
-            return jsonify({"error": str(e)}), 500
 
         except Exception as e:
             print(f"An error occurred during model training: {e}")
-            return jsonify({"error": str(e)}), 500
 
 
         # Saving the trained model
@@ -140,7 +150,6 @@ def train():
             print(f"Model saved to {model_save_path}")
         except Exception as e:
             print(f"An error occurred while saving the model: {e}")
-            return jsonify({"error": str(e)}), 500
 
         # Extract the training history and final metrics
         training_metrics = {
@@ -160,11 +169,11 @@ def train():
             "val_loss": training_metrics["val_loss"],
             "parameters": training_metrics["parameters"]
         }
-
-        return jsonify(response), 200
+        print(response)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        return jsonify({"error": str(e)}), 500
+        with open('/app/error_log.txt', "a") as log:
+            log.write(str(e) + "\n")
 
 
 # Running the Flask app
