@@ -43,24 +43,6 @@ spec:
 #######################################
 ########## Persistent Volume ##########
 #######################################
-
-# PV for processed data
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: processed-data-pv  # Name of the Persistent Volume for processed data
-  namespace: ml-app
-spec:
-  capacity:
-    storage: 4Gi  
-  accessModes:
-    - ReadWriteMany  
-  hostPath:
-    path: "/mnt/processed_data"  # Path on the host machine where the processed data is stored
-  persistentVolumeReclaimPolicy: Retain
----
-
-# PV for saved model
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -74,7 +56,6 @@ spec:
   hostPath:
     path: "/mnt/saved_model"  # Path on the host machine where the model will be saved
   persistentVolumeReclaimPolicy: Retain
----
 
 #############################################
 ########## Persistent Volume Claim ##########
@@ -89,6 +70,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany 
+  volumeName: // replace with existing PV from JJ ## here need edit
   resources:
     requests:
       storage: 4Gi
@@ -105,7 +87,4 @@ spec:
     - ReadWriteOnce  
   resources:
     requests:
-      storage: 4Gi  
-
-
-
+      storage: 4Gi
