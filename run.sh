@@ -2,11 +2,10 @@
 
 # Handle minikube processess (assuming is downloaded)
 minikube delete
-minikube start
+minikube start --cpus=4 memory=4096
 eval $(minikube docker-env)
 
-
-# Run the deployment file
+# Run the consolidated deployment file
 kubectl apply -f deployment.yml 
 
 # Run container specific processes (if needed)
@@ -19,7 +18,6 @@ docker pull jurnjie/data-processing:latest
 docker pull 200iqkid/model-training:latest
 # build inference
 docker pull edysontan/inference:latest
-
 
 # Return the url of the website
 minikube service flask-app-service -n ml-app --url

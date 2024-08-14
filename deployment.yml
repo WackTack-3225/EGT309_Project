@@ -2,23 +2,22 @@
 
 # Define the Namespace
 apiVersion: v1
-kind: Namespace
+kind: Namespace # abstraction layer to prevent pods from being build in base env to prevent accidental errors
 metadata:
   name: ml-app
 
-# This namespace is the common namespace for all our containers
-# It is the common identifier to access this application
 ---
-# config map to define the routing for the flask server to communicate
+
 apiVersion: v1
-kind: ConfigMap
+kind: ConfigMap # useful tool to allow easier access & modification of URL/File paths 
 metadata:
   name: flask-url
   namespace: ml-app
 data:
-  DP_POD_URL: "http://data-processing-pod/start-training"
-  INFERENCE_POD_URL: "http://inference-pod/get-model-info"
-  INF_POD_URL: "http://inference-service/predict"
+  DP_POD_URL: "http://processing-service:84/start-processing" # WORKING
+  MODEL_TRAINING_URL: "http://model-training-service:85/train" # SET TO CORRECT (?)
+  RESULTS_URL: "http://model-training-service:85/results" # SET TO CORRECT(?)
+  INF_POD_URL: "http://inference-service:83/predict" # WORKING
 
 ---
 # Flask App Deployment
@@ -28,43 +27,46 @@ metadata:
   name: flask-app
   namespace: ml-app
 spec:
-  replicas: 3 # Set 3 replicas for stability
-  minReadySeconds: 120 #s to start up the pod and wait for the rest of the pods to get created also before accepting requests to it
+  replicas: 3 # MAX 3 containers deployed
   selector:
     matchLabels:
-      chapter: flask # create with this deploylent for label: flask only
+      chapter: flask # Applies configuration to containers w/ label flask
   strategy:
-    type: RollingUpdate
+    type: RollingUpdate # Deploy/Remove/Update pods based on specs below
     rollingUpdate:
-      maxUnavailable: 1 # Allow 1 pod to be unavailable at all times
-      maxSurge: 1 # Allow 1 extra pod to be created during update
+      maxUnavailable: 1 # max 1 pod unavail at a time
+      maxSurge: 1 # max 1 extra pod avail at a time
   template:
     metadata:
       labels:
-        chapter: flask # allow flask svc to connect to it
+        chapter: flask # create from a temaplate (image) and apply label flask for svc to connect
     spec:
-      restartPolicy: Always 
       containers:
       - name: flask-container
-        image: wacktack/flask-app:latest
-        env:
+        image: edysontan/flask-app:latest # pull from flask-app image
+        env: # to get Config map variables
         - name: DP_POD_URL
           valueFrom:
             configMapKeyRef:
               name: flask-url
               key: DP_POD_URL
+        - name: MODEL_TRAINING_URL
+          valueFrom:
+            configMapKeyRef:
+              name: flask-url
+              key: MODEL_TRAINING_URL
+        - name: RESULTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: flask-url
+              key: RESULTS_URL
         - name: INF_POD_URL
           valueFrom:
             configMapKeyRef:
               name: flask-url
               key: INF_POD_URL
-        - name: INFERENCE_POD_URL
-          valueFrom:
-            configMapKeyRef:
-              name: flask-url
-              key: INFERENCE_POD_URL
         ports:
-        - containerPort: 5000 # set port 5000 for connection
+        - containerPort: 5000 # set port 5000, same as app.py
 
 ---
 # Flask app service
@@ -72,22 +74,22 @@ apiVersion: v1
 kind: Service
 metadata:
   name: flask-app-service
-  namespace: ml-app
+  namespace: ml-app # deploy in same namespace to access
   labels:
-    chapter: flask # used to identify flask
+    chapter: flask # unique calling method to ensure service operates on this specific chapter
 spec:
-  type: NodePort 
+  type: NodePort  # LoadBalancer for external
   ports:
   - protocol: TCP
-    port: 5000  # External port to access
+    port: 5000  # Exposed port
     targetPort: 5000  # Flask app port inside the container
-    nodePort: 30005 # assigned nodePort
   selector:
-    chapter: flask # used to connect to label: flask
+    chapter: flask # applies to selected chapter: flask
 
 ---
 # Inference Container - Edyson
 # Configmap
+
 # Store non-confidential data
 
 apiVersion: v1
@@ -102,6 +104,9 @@ data:
 
 
 ---
+
+# Service
+
 # Service accessible from within the cluster (ClusterIP) and will sent traffic to pods
 # it manages (recieves on 80 sent to containers at 8083)
 # Does not deploy or manage pods just route traffic
@@ -117,11 +122,12 @@ spec:
     app: inference         # Labels used to identify the pods this Service targets
   ports:
   - protocol: TCP          # The protocol for the port (usually TCP)
-    port: 80               # The port that the Service exposes to the outside world
+    port: 83               # The port that the Service exposes to the outside world
     targetPort: 8083       # The port on the pod/container that the Service forwards traffic to
   type: ClusterIP          # The type of Service; ClusterIP means it's accessible only within the cluster
 
 ---
+
 # PVC
 
 # To allow request of a storage, request 4 Gi

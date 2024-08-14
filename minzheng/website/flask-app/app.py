@@ -17,6 +17,11 @@ def index():
 def training_route():
     return render_template('training/01_1.html')  
 
+# Define routing for RESULTS_1
+@app.route('/results_page')
+def training_route():
+    return render_template('training/01_2.html')  
+
 # Define routing for INFERENCE_1
 @app.route('/inference_page')
 def inference_route():
@@ -27,7 +32,8 @@ def inference_route():
 def inference_route_2():
     return render_template('inference/02_2.html')  
 
-# Endpoint to start the model training
+
+# Endpoint to start the data processing
 @app.route('/process', methods=['POST'])
 def start_training():
     try:
@@ -43,26 +49,34 @@ def start_training():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-# Endpoint to get model accuracy and parameters
-@app.route('/results', methods=['GET'])
-def get_model_info():
+# Endpoint to start the model training
+@app.route('/process_model', methods=['POST'])
+def do_training():
     try:
-        # Send POST request to inference pod to retrieve model data
-        MODEL_TRAINING_URL = os.getenv("MODEL_TRAINING_URL")
-        response = requests.post(MODEL_TRAINING_URL)
+        # Send POST request to data processing pod to start the training
+        MOD_TRG_URL = os.getenv("MOD_TRG_URL")
 
+        response = requests.post(MOD_TRG_URL)
         if response.status_code == 200:
-            data = response.json()
-            return jsonify({
-                "success": True,
-                "accuracy": data.get('accuracy'),
-                "val_accuracy": data.get('val_accuracy'),
-                "loss": data.get('loss'),
-                "val_loss": data.get('val_loss'),
-                "parameters": data.get('parameters')
-            }), 200
+            return jsonify({"success": True}), 200
         else:
-            return jsonify({"success": False, "error": "Failed to retrieve model data"}), 500
+            return jsonify({"success": False, "error": "Training pipeline failed"}), 300
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ENDPOINT TO GET MODEL RESULTS
+@app.route('/training-finished', methods=['POST'])
+def training_complete():
+    try:
+        RESULT_URL = os.getenv("RESULT_URL")
+
+        response = requests.post(RESULT_URL)
+        if response.status_code == 200:
+            return jsonify({"success": True, "data": response.json()}), 200
+        
+        if response.status_code == 400:
+            return jsonify({"success": False, "error": "File not found, model not finished training"}), 400
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

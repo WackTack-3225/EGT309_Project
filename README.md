@@ -81,8 +81,16 @@ WHAT I WANT FROM INFERENCE POD:
 
 Flask:
 > 5000 --> Container
-> 30005 --> Nodeport 
+> FLOATING-IP --> Nodeport 
 
 Inference:
-> 80 --> Exposed Port
+> 83 --> Exposed Port
 > 8083 --> targetPort
+
+DP:
+> 84 --> Exposed Port
+> 8084 --> targetPort
+
+MT:
+> 85 --> Exposed Port
+> 8085 --> targetPort

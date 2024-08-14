@@ -193,6 +193,29 @@ def run_training_and_notify():
             log.write(str(e) + "\n")
 
 
+# DUMMY CODE, SHIFT THIS DECLARATION TO TOP WHEN LOCATION IS KNOWN
+json_file_path = 'DUMMY'
+
+# get results
+@app.route('/results', methods=['POST'])
+def get_and_return_results():
+    # read file from .js file stored in PV
+    try:
+        # Check if the file exists
+        if not os.path.exists(json_file_path):
+            return jsonify({"error": "File not found"}), 400
+        
+        # Open and read the JSON file
+        with open(json_file_path, 'r') as json_file: # EDIT HERE
+            data = json.load(json_file)
+        
+        # Return the data in the same JSON format
+        return jsonify(data), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # Running the Flask app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8082) # -2 for 2nd process in pipeline

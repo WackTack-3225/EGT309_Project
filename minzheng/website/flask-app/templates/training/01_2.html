@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training Results</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .result-item {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        .button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Model Training Results</h1>
+        <div class="result-item" id="accuracy">Accuracy: Loading...</div>
+        <div class="result-item" id="val_accuracy">Validation Accuracy: Loading...</div>
+        <div class="result-item" id="loss">Loss: Loading...</div>
+        <div class="result-item" id="val_loss">Validation Loss: Loading...</div>
+        <div class="result-item" id="model_params">Model Parameters: Loading...</div>
+
+        <button class="button" onclick="goBack()">Go to inference</button>
+    </div>
+
+    <script>
+        // Function to load results from session storage and display them
+        function loadResults() {
+            try {
+                const results = JSON.parse(sessionStorage.getItem('training_results'));
+                if (results) {
+                    document.getElementById('accuracy').innerText = `Accuracy: ${results.accuracy}`;
+                    document.getElementById('val_accuracy').innerText = `Validation Accuracy: ${results.val_accuracy}`;
+                    document.getElementById('loss').innerText = `Loss: ${results.loss}`;
+                    document.getElementById('val_loss').innerText = `Validation Loss: ${results.val_loss}`;
+                    // Display nested model_params fields
+                    const params = results.model_params;
+                    document.getElementById('model_params').innerHTML = `
+                        <strong>Model Parameters:</strong><br>
+                        Learning Rate: ${params.learning_rate}<br>
+                        Epochs: ${params.epochs}<br>
+                        Batch Size: ${params.batch_size}<br>
+                        Optimizer: ${params.optimizer}`;
+                } else {
+                    document.querySelector('.container').innerHTML = '<h1>No results found.</h1>';
+                }
+            } catch (error) {
+                console.error('Failed to load results:', error);
+                document.querySelector('.container').innerHTML = '<h1>Error loading results.</h1>';
+            }
+        }
+
+        // Function to go back to the inference page
+        function goBack() {
+            window.location.href = '/inference_page'; 
+        }
+
+        // Load the results when the page loads
+        window.onload = loadResults;
+    </script>
+</body>
+</html>
