@@ -218,4 +218,4 @@ def get_and_return_results():
 
 # Running the Flask app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8082) # -2 for 2nd process in pipeline
+    app.run(host='0.0.0.0', port=8085) # same as deployment cfig
