@@ -16,7 +16,7 @@ metadata:
   namespace: ml-app
 spec:
   selector:
-    app: data-processing-deployment
+    app: data-processing
   ports:
   - protocol: TCP
     port: 84
