@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-training-deployment
+  namespace: ml-app
+spec:
+  replicas: 3  # Number of pod replicas
+  selector:
+    matchLabels:
+      app: model-training
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: model-training
+    spec:
+      containers:
+      - name: model-training # model training code
+        image: 200iqkid/model-training:latest # hai jie's image
+        volumeMounts:
+        - mountPath: "/app/data_309"  # to modify
+          name: processed-data-volume
+        - mountPath: '/mnt/saved_model'  # to modify
+          name: saved-model-volume
+
+      volumes:
+      - name: processed-data-volume # jurn jie's volume claim
+        persistentVolumeClaim:
+          claimName: processed-data-pvc
+      - name: saved-model-volume # hai jie'svolume claim
+        persistentVolumeClaim:
+          claimName: saved-model-pvc
+
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: saved-model-pv  # Name of the Persistent Volume for the saved model
+  namespace: ml-app
+spec:
+  capacity:
+    storage: 4Gi  
+  accessModes:
+    - ReadWriteMany  
+  hostPath:
+    path: "/mnt/saved_model"  # Path on the host machine where the model will be saved
+  persistentVolumeReclaimPolicy: Retain
+
+---
+# PVC for processed data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: processed-data-pvc  # Name of the PVC that will request the processed data volume
+  namespace: ml-app  
+spec:
+  accessModes:
+    - ReadWriteMany 
+  volumeName: // replace with existing PV from JJ ## here need edit
+  resources:
+    requests:
+      storage: 4Gi
+
+---
+# PVC for saved model
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saved-model-pvc  # Name of the PVC that will request the saved model volume
+  namespace: ml-app  
+spec:
+  accessModes:
+    - ReadWriteOnce  
+  resources:
+    requests:
+
