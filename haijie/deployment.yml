@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: model-training # model training code
-        image: 200iqkid/model-training:latest # hai jie's image
+        image: edysontan/model-training:latest # hai jie's image
         volumeMounts:
         - mountPath: "/app/data"  # to modify
           name: processed-data-pv

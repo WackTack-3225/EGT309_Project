@@ -81,7 +81,15 @@
             .then(response => response.json())
             .then(data => {
             if (data) {
-                document.getElementById('result').innerText = JSON.stringify(data);
+                fetch('/results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        payload: 100
+                    })
+                })
             }
         })
         .then(response => response.json())

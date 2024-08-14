@@ -21,15 +21,6 @@ def train():
     # Retrieve the status code from the request headers
     status_code = request.headers.get('Status-Code', type=int)  # Typecast to int
 
-    # Extract the payload from the request
-    data = request.get_json()
-
-    # Check if the JSON is present
-    if not data:
-        return jsonify({"error": "Missing or invalid JSON payload."}), 400
-    
-    value = data.get('payload')  # Extract the value from JSON, dummy code for model parameters
-
     # Check if the status code is 200
     if status_code != 200:
         return jsonify({"error": "Invalid status code. Expected 200."}), 400
@@ -37,8 +28,8 @@ def train():
     # main model training section
     try:
         # Define the paths to the training and validation data
-        train_data_dir = '/app/data_309/train'
-        validation_data_dir = '/app/data_309/test'
+        train_data_dir = '/app/data/train'
+        validation_data_dir = '/app/data/test'
 
         # Ensure the directories exist
         if not os.path.exists(train_data_dir):
@@ -62,6 +53,26 @@ def train():
         print("Checking validation data directory...")
         check_images_in_directory(validation_data_dir)
 
+
+
+        # Load the training and validation data
+        train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
+            train_data_dir,
+            image_size=(64, 64),  # Adjust size as needed
+            batch_size=100,
+            label_mode='categorical'  # Assuming categorical labels
+        )
+
+        validation_dataset = tf.keras.preprocessing.image_dataset_from_directory(
+            validation_data_dir,
+            image_size=(64, 64),  # Adjust size as needed
+            batch_size=100,
+            label_mode='categorical'  # Assuming categorical labels
+        )
+
+
+
+
         # Path to save the model
         model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model/trained_model.keras')
 
@@ -73,34 +84,6 @@ def train():
         if not os.path.exists(model_save_dir):
             os.makedirs(model_save_dir)
 
-        # Data generators for loading and augmenting the images
-        try:
-            train_datagen = ImageDataGenerator(
-                rescale=1./255,
-                shear_range=0.2,
-                zoom_range=0.2,
-                horizontal_flip=True
-            )
-
-            test_datagen = ImageDataGenerator(rescale=1./255)
-
-            train_generator = train_datagen.flow_from_directory(
-                train_data_dir,
-                target_size=(64, 64),
-                batch_size=32,
-                class_mode='categorical'
-            )
-
-            validation_generator = test_datagen.flow_from_directory(
-                validation_data_dir,
-                target_size=(64, 64),
-                batch_size=32,
-                class_mode='categorical'
-            )
-        except Exception as e:
-            print(f"Error in data loading or augmentation: {e}")
-            sys.exit(1)
-
 
         # MobileNetV2 Model as base model
         base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(64, 64, 3))
@@ -110,7 +93,7 @@ def train():
         x = base_model.output
         x = layers.GlobalAveragePooling2D()(x)
         x = layers.Dense(512, activation='relu')(x)
-        predictions = layers.Dense(train_generator.num_classes, activation='softmax')(x)
+        predictions = layers.Dense(4, activation='softmax')(x)
         transfer_model = models.Model(inputs=base_model.input, outputs=predictions)
 
 
@@ -137,17 +120,19 @@ def train():
         # Training the model
         try:
             transfer_history = transfer_model.fit(
-                train_generator,
+                train_dataset,
                 epochs=2,  # Adjust the number of epochs as needed
-                validation_data=validation_generator,
+                validation_data=validation_dataset,
                 callbacks=[early_stopping]
             )
         except tf.errors.ResourceExhaustedError as e:
             print(f"Resource Exhausted Error during training: {e}")
-            sys.exit(1)
+            return jsonify({"error": str(e)}), 500
+
         except Exception as e:
             print(f"An error occurred during model training: {e}")
-            sys.exit(1)
+            return jsonify({"error": str(e)}), 500
+
 
         # Saving the trained model
         try:
@@ -155,27 +140,31 @@ def train():
             print(f"Model saved to {model_save_path}")
         except Exception as e:
             print(f"An error occurred while saving the model: {e}")
-            sys.exit(1)
+            return jsonify({"error": str(e)}), 500
 
+        # Extract the training history and final metrics
+        training_metrics = {
+            "accuracy": transfer_history.history['accuracy'][-1],
+            "val_accuracy": transfer_history.history['val_accuracy'][-1],
+            "loss": transfer_history.history['loss'][-1],
+            "val_loss": transfer_history.history['val_loss'][-1],
+            "parameters": transfer_model.count_params()
+        }
+
+         # Construct the response to match the desired format
+        response = {
+            "success": True,
+            "accuracy": training_metrics["accuracy"],
+            "val_accuracy": training_metrics["val_accuracy"],
+            "loss": training_metrics["loss"],
+            "val_loss": training_metrics["val_loss"],
+            "parameters": training_metrics["parameters"]
+        }
+
+        return jsonify(response), 200
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        sys.exit(1)
-
-    print("trainmodel.py execution completed.")
-
-    # Sending a response back to the server with a status code of 200
-    try:
-        SERVER_URL = 'https//dummy.com'
-        response = requests.post(
-            SERVER_URL,  # Replace with the actual URL and endpoint
-            json={"payload": 101} # dummy code for model parameters & accuracy
-        )
-        print(f"POST request sent to the server. Response status: {response.status_code}")
-    except Exception as e:
-        print(f"An error occurred while sending the POST request: {e}")
-        sys.exit(1)
-
-    return jsonify(response.json()), 200
+        return jsonify({"error": str(e)}), 500
 
 
 # Running the Flask app

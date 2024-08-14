@@ -49,13 +49,16 @@ def get_model_info():
     try:
         # Send POST request to inference pod to retrieve model data
         MODEL_TRAINING_URL = os.getenv("MODEL_TRAINING_URL")
-        response = requests.post(MODEL_TRAINING_URL, json=request.json)
+        response = requests.post(MODEL_TRAINING_URL)
 
-        if response.status_code == 200 and response.json().get('success'):
+        if response.status_code == 200:
             data = response.json()
             return jsonify({
                 "success": True,
                 "accuracy": data.get('accuracy'),
+                "val_accuracy": data.get('val_accuracy'),
+                "loss": data.get('loss'),
+                "val_loss": data.get('val_loss'),
                 "parameters": data.get('parameters')
             }), 200
         else:
