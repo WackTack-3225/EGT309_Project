@@ -31,7 +31,7 @@ def train():
     thread.start()
 
     # Immediately return a response indicating that training has started
-    return jsonify({"status": "Training started"}), 200
+    return jsonify({"status": "Training starting"}), 200
     
 
 
