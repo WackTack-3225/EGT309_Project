@@ -13,7 +13,7 @@ metadata:
   namespace: ml-app
 data:
   DP_POD_URL: "http://processing-service:84/start-processing"
-  MODEL_TRAINING_URL: "http://inference-pod/get-model-info"
+  MODEL_TRAINING_URL: "http://model-training-service:82/train"
   INF_POD_URL: "http://inference-service:83/predict"
 
 ---
