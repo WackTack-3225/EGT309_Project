@@ -34,7 +34,7 @@ def start_training():
         # Send POST request to data processing pod to start the training
         DP_POD_URL = os.getenv("DP_POD_URL")
 
-        response = requests.get(DP_POD_URL)
+        response = requests.post(DP_POD_URL)
 
         if response.status_code == 200 and response.json() == {"status": "Processing completed"} :
             return jsonify({"success": True}), 200
