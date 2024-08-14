@@ -33,11 +33,10 @@ def start_training():
     try:
         # Send POST request to data processing pod to start the training
         DP_POD_URL = os.getenv("DP_POD_URL")
-        payload = request.json
 
-        response = requests.post(DP_POD_URL, json=payload)
+        response = requests.get(DP_POD_URL)
 
-        if response.status_code == 200 and response.json().get('success'):
+        if response.status_code == 200 and response.json() == {"status": "Processing completed"} :
             return jsonify({"success": True}), 200
         else:
             return jsonify({"success": False, "error": "Training pipeline failed"}), 500
@@ -46,12 +45,12 @@ def start_training():
         return jsonify({"success": False, "error": str(e)}), 500
 
 # Endpoint to get model accuracy and parameters
-@app.route('/results', methods=['POST'])
+@app.route('/results', methods=['GET'])
 def get_model_info():
     try:
         # Send POST request to inference pod to retrieve model data
-        INFERENCE_POD_URL = os.getenv("INFERENCE_POD_URL")
-        response = requests.post(INFERENCE_POD_URL, json=request.json)
+        MODEL_TRAINING_URL = os.getenv("MODEL_TRAINING_URL")
+        response = requests.post(MODEL_TRAINING_URL, json=request.json)
 
         if response.status_code == 200 and response.json().get('success'):
             data = response.json()

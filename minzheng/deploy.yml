@@ -12,8 +12,8 @@ metadata:
   name: flask-url
   namespace: ml-app
 data:
-  DP_POD_URL: "http://data-processing-pod/start-training"
-  INFERENCE_POD_URL: "http://inference-pod/get-model-info"
+  DP_POD_URL: "http://processing-service/start-processing"
+  MODEL_TRAINING_URL: "http://inference-pod/get-model-info"
   INF_POD_URL: "http://inference-service/predict"
 
 ---
@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: flask-container
-        image: wacktack/flask-app:latest
+        image: edysontan/flask-app:latest
         env:
         - name: DP_POD_URL
           valueFrom:
@@ -52,11 +52,11 @@ spec:
             configMapKeyRef:
               name: flask-url
               key: INF_POD_URL
-        - name: INFERENCE_POD_URL
+        - name: MODEL_TRAINING_URL
           valueFrom:
             configMapKeyRef:
               name: flask-url
-              key: INFERENCE_POD_URL
+              key: MODEL_TRAINING_URL
         ports:
         - containerPort: 5000 # set port 5000
 
