@@ -88,11 +88,11 @@ spec:
 apiVersion: v1 
 kind: Service 
 metadata:
-  name: model-training-service 
+  name: model-training-service  # http://model-training-service/train **
   namespace: ml-app
 spec:
   selector:
-    app: inference         # Labels used to identify the pods this Service targets
+    app: model-training         # Labels used to identify the pods this Service targets
   ports:
   - protocol: TCP          # The protocol for the port (usually TCP)
     port: 80               # The port that the Service exposes to the outside world
