@@ -1,6 +1,6 @@
 # Define the Namespace
 apiVersion: v1
-kind: Namespace 
+kind: Namespace # abstraction layer to prevent pods from being build in base env to prevent accidental errors
 metadata:
   name: ml-app
 
@@ -12,10 +12,10 @@ metadata:
   name: flask-url
   namespace: ml-app
 data:
-  DP_POD_URL: "http://processing-service:84/start-processing" 
-  MODEL_TRAINING_URL: "http://model-training-service:82/train" 
-  RESULT_URL: "http://model-training-service:82/results" 
-  INF_POD_URL: "http://inference-service:83/predict" 
+  DP_POD_URL: "http://processing-service:84/start-processing" # WORKING
+  MODEL_TRAINING_URL: "http://model-training-service:82/train" # SET TO CORRECT (?)
+  RESULT_URL: "http://model-training-service:82/results" # SET TO CORRECT(?)
+  INF_POD_URL: "http://inference-service:83/predict" # WORKING
 
 ---
 # Flask App Deployment

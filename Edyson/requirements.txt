@@ -1,3 +1,4 @@
+# Libraries needed to install in the container
 tensorflow==2.17.0
 numpy
 Pillow
