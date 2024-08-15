@@ -63,7 +63,18 @@ spec:
   resources:
     requests:
       storage: 4Gi
-
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saved-model-pvc 
+  namespace: ml-app           
+spec:
+  accessModes:
+    - ReadWriteMany  
+  resources:
+    requests:
+      storage: 4Gi    # Match the storage capacity with the PV
 ---
 
 # Inference Deployment
@@ -108,6 +119,8 @@ spec:
           volumeMounts:
             - mountPath: /mnt  # Path inside container colume mounted at
               name: store-model-volume
+            - mountPath: /mnt/saved_model
+              name: saved-model-volume
           env: # environment variables for container to use
             - name: DATA_PATH
               valueFrom:
@@ -128,3 +141,6 @@ spec:
         - name: store-model-volume
           persistentVolumeClaim:
             claimName: store-model-pvc
+        - name: saved-model-volume
+          persistentVolumeClaim:
+            claimName: saved-model-pvc

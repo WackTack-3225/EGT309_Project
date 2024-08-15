@@ -77,7 +77,7 @@ spec:
     spec:
       containers:
       - name: data-processing-container
-        image: edysontan/data-processing:latest
+        image: 200iqkid/data-processing
         volumeMounts:
         - mountPath: "/app/processed_data"
           name: processed-data-pv

@@ -15,7 +15,7 @@ import json
 import subprocess
 import requests
 
-app = Flask(__name__)
+app = Flask(_name_)
 
 @app.route('/train', methods=['POST'])
 def train():
@@ -127,9 +127,11 @@ def run_training_and_notify():
             log.write("Defining of model\n")
 
         # Compiling the model
+        learning_rate = 1e-5 #change learning rate here
+        optimizer = Adam(learning_rate)
         transfer_model.compile(
             loss='categorical_crossentropy',
-            optimizer=Adam(1e-5),  # Lower learning rate
+            optimizer=optimizer,  
             metrics=['accuracy']
         )
 
@@ -140,9 +142,10 @@ def run_training_and_notify():
 
         # Training the model
         try:
+            epochs = 1 # Adjust the epochs as needed
             transfer_history = transfer_model.fit(
                 train_dataset,
-                epochs=1,  # Adjust the number of epochs as needed
+                epochs=epochs,
                 validation_data=validation_dataset,
                 callbacks=[early_stopping]
             )
@@ -174,19 +177,24 @@ def run_training_and_notify():
             "val_accuracy": transfer_history.history['val_accuracy'][-1],
             "loss": transfer_history.history['loss'][-1],
             "val_loss": transfer_history.history['val_loss'][-1],
-            "parameters": transfer_model.count_params()
         }
 
-         # Construct the response to match the desired format
+       # Construct the response to match the desired format
         response = {
-            "success": True,
             "accuracy": training_metrics["accuracy"],
             "val_accuracy": training_metrics["val_accuracy"],
             "loss": training_metrics["loss"],
             "val_loss": training_metrics["val_loss"],
-            "parameters": training_metrics["parameters"]
-        }
-        log.write(str(response) + "\n")
+            "model_params": {
+                "learning_rate": learning_rate,
+                "epochs": epochs,
+                "batch_size": 100, # Match the batch size used in training
+                "optimizer": optimizer._class.name_
+                }         
+            }
+        
+        with open('/mnt/saved_model/output.json', 'w') as f:
+            json.dump(response,f)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         with open('/app/error_log.txt', "a") as log:
@@ -194,7 +202,7 @@ def run_training_and_notify():
 
 
 # DUMMY CODE, SHIFT THIS DECLARATION TO TOP WHEN LOCATION IS KNOWN
-json_file_path = 'DUMMY'
+json_file_path = '../mnt/saved_model/output.json'
 
 # get results
 @app.route('/results', methods=['POST'])
@@ -206,7 +214,7 @@ def get_and_return_results():
             return jsonify({"error": "File not found"}), 400
         
         # Open and read the JSON file
-        with open(json_file_path, 'r') as json_file: # EDIT HERE
+        with open('/mnt/saved_model/output.json', 'r') as json_file: # EDIT HERE
             data = json.load(json_file)
         
         # Return the data in the same JSON format
@@ -218,4 +226,4 @@ def get_and_return_results():
 
 # Running the Flask app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8085) # same as deployment cfig
+    app.run(host='0.0.0.0', port=8082) # same as deployment cfig
