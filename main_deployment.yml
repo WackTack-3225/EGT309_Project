@@ -227,7 +227,7 @@ spec:
     spec:
       containers:
       - name: data-processing-container
-        image: 200iqkid/data-processing:latest
+        image: jurnjie/data-processing:final-build
         volumeMounts:
         - name: processed-data-pv 
           mountPath: "/app/processed_data"
