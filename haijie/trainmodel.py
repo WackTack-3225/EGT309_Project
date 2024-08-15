@@ -1,22 +1,18 @@
 import os
-import sys
 import tensorflow as tf
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras import layers, models
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping
 from threading import Thread
 
 
-from flask import Flask, request, jsonify, render_template
-import base64
+from flask import Flask, jsonify
 import json
-import subprocess
-import requests
 
 app = Flask(__name__)
 
+# Flask route to initiate the model training
 @app.route('/train', methods=['POST'])
 def train():
     # Start the training process in a new thread
@@ -27,14 +23,17 @@ def train():
     return jsonify({"status": "Training startings"}), 200
     
 
-
-
 def run_training_and_notify():
-    # main model training section
+    """
+    This function handles the entire training process, from data loading to model saving.
+    It runs in a separate thread to allow the Flask API to return immediately.
+    """
     try:
         # Define the paths to the training and validation data
         train_data_dir = '/app/data/train'
         validation_data_dir = '/app/data/test'
+
+        # Logging start of the threading process
         with open('/app/error_log.txt', "a") as log:
             log.write("Threading start\n")
 
@@ -60,27 +59,24 @@ def run_training_and_notify():
         print("Checking validation data directory...")
         check_images_in_directory(validation_data_dir)
 
+        # Logging validation of paths
         with open('/app/error_log.txt', "a") as log:
             log.write("Validate train and validation paths\n")
-
 
         # Load the training and validation data
         train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
             train_data_dir,
             image_size=(64, 64),  # Adjust size as needed
             batch_size=100,
-            label_mode='categorical'  # Assuming categorical labels
+            label_mode='categorical'  
         )
 
         validation_dataset = tf.keras.preprocessing.image_dataset_from_directory(
             validation_data_dir,
             image_size=(64, 64),  # Adjust size as needed
             batch_size=100,
-            label_mode='categorical'  # Assuming categorical labels
+            label_mode='categorical' 
         )
-
-
-
 
         # Path to save the model
         model_save_path = os.getenv('MODEL_SAVE_PATH', '/mnt/saved_model')
@@ -93,13 +89,12 @@ def run_training_and_notify():
         if not os.path.exists(model_save_dir):
             os.makedirs(model_save_dir)
 
-
+        # Logging creation and validation of model save path
         with open('/app/error_log.txt', "a") as log:
             log.write("Create and validate model saving path\n")
 
         # MobileNetV2 Model as base model
         base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(64, 64, 3))
-
 
         # Modify input shape and classifier layers
         x = base_model.output
@@ -108,7 +103,6 @@ def run_training_and_notify():
         predictions = layers.Dense(4, activation='softmax')(x)
         transfer_model = models.Model(inputs=base_model.input, outputs=predictions)
 
-
         # Freezing the first 10 layers of the model
         base_model.trainable = True
         for layer in transfer_model.layers[:10]:
@@ -116,11 +110,12 @@ def run_training_and_notify():
         for layer in transfer_model.layers[10:]:
             layer.trainable = True
 
+        # Logging model definition
         with open('/app/error_log.txt', "a") as log:
             log.write("Defining of model\n")
 
-        # Compiling the model
-        learning_rate = 1e-5 #change learning rate here
+        # Compiling the model with appropriate optimizer and loss function
+        learning_rate = 1e-5 # change learning rate here
         optimizer = Adam(learning_rate)
         transfer_model.compile(
             loss='categorical_crossentropy',
@@ -128,10 +123,8 @@ def run_training_and_notify():
             metrics=['accuracy']
         )
 
-
         # Early stopping to prevent overfitting
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-
 
         # Training the model
         try:
@@ -153,13 +146,11 @@ def run_training_and_notify():
 
         # Saving the trained model
         try:
-            
             # Append the model file name to the save path
             full_model_save_path = os.path.join(model_save_path, 'trainedmodel.h5')
     
             # Save the model
             transfer_model.save(full_model_save_path)
-
             print(f"Model saved to {model_save_path}")
         except Exception as e:
             print(f"An error occurred while saving the model: {e}")
@@ -186,6 +177,7 @@ def run_training_and_notify():
                 }         
             }
         
+        # Save the training metrics to a JSON file
         with open('/mnt/saved_model/output.json', 'w') as f:
             json.dump(response,f)
     except Exception as e:
@@ -194,20 +186,23 @@ def run_training_and_notify():
             log.write(str(e) + "\n")
 
 
-# DUMMY CODE, SHIFT THIS DECLARATION TO TOP WHEN LOCATION IS KNOWN
+# File Path to save the model parameters to a json file for the flask-app to retrieve and load
 json_file_path = '../mnt/saved_model/output.json'
 
-# get results
+# Flask route to return the training results
 @app.route('/results', methods=['POST'])
 def get_and_return_results():
-    # read file from .js file stored in PV
+    """
+    This function reads the JSON file containing training results
+    and returns the data as a JSON response.
+    """
     try:
         # Check if the file exists
         if not os.path.exists(json_file_path):
             return jsonify({"error": "File not found"}), 400
         
         # Open and read the JSON file
-        with open('/mnt/saved_model/output.json', 'r') as json_file: # EDIT HERE
+        with open('/mnt/saved_model/output.json', 'r') as json_file:
             data = json.load(json_file)
         
         # Return the data in the same JSON format
@@ -219,4 +214,4 @@ def get_and_return_results():
 
 # Running the Flask app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8082) # same as deployment cfig
+    app.run(host='0.0.0.0', port=8082)  # Same port as defined in the deployment configuration
