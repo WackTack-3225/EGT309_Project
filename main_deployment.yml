@@ -280,10 +280,11 @@ spec:
           claimName: saved-model-pvc
 
 ---
+# Deployment (4/4) - Edyson
 apiVersion: apps/v1 
 kind: Deployment   
 metadata:
-  name: inference 
+  name: inference-deployment
   namespace: ml-app 
 spec:
   replicas: 3 
