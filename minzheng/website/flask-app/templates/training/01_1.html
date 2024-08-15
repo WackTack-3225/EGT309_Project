@@ -96,7 +96,7 @@
                 document.querySelector('.loading').style.display = 'none';
                 document.querySelector('.message').style.display = 'block'; // Display confirmation message
 
-                // Pause execution for 5 seconds before showing the next-page-button
+                // Pause execution for 2 mins before showing the next-page-button
                 setTimeout(() => {
                     // Hide the Start Training button
                     document.querySelector('.start-training-button').style.display = 'none';
@@ -104,7 +104,7 @@
                     // Show the Go to Results button
                     document.querySelector('.next-page-button').style.display = 'block';
                     document.querySelector('.button-container').style.display = 'block'; // Show the button container
-                }, 45000); // 5 seconds
+                }, 120000); // 2 mins
             })
 
 

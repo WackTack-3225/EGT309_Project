@@ -1,77 +1,130 @@
+###############################
+########## NAMESPACE ##########
+###############################
+
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ml-app
+
+# This creates a namespace called "ml-app" where all resources related to the machine learning application will be grouped.
 ---
+
+###############################
+########## CONFIGMAP ##########
+###############################
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: train-config
+  namespace: ml-app
+data:
+  MODEL_SAVE_PATH: "/mnt/saved_model"
+
+# The ConfigMap "train-config" stores configuration data as key-value pairs. 
+# In this case, it defines the "MODEL_SAVE_PATH" that the application will use to save the trained model.
+---
+
+################################
+########## DEPLOYMENT ##########
+################################
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-training-deployment
   namespace: ml-app
 spec:
-  replicas: 3  # Number of pod replicas
+  replicas: 3               # Number of pod replicas to create for load balancing and high availability
   selector:
     matchLabels:
       app: model-training
   strategy:
-    type: RollingUpdate
+    type: RollingUpdate     # Strategy for updating the deployment without downtime
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
+      maxUnavailable: 1     # Maximum number of pods that can be unavailable during the update
+      maxSurge: 1           # Maximum number of pods that can be created over the desired number during the update
   template:
     metadata:
       labels:
         app: model-training
     spec:
       containers:
-      - name: model-training # model training code
-        image: edysontan/model-training # hai jie's image
+      - name: model-training                    # Name of the container
+        image: 200iqkid/model-training:latest   # Latest Docker image containing the model training code
         volumeMounts:
-        - mountPath: "/app/data"  # to modify
+        - mountPath: "/app/data"                # Mount the processed data volume at /app/data inside the container
           name: processed-data-pv
-        - mountPath: '/mnt/saved_model'  # to modify
+        - mountPath: '/mnt/saved_model'         # Mount the saved model volume at /mnt/saved_model inside the container
           name: saved-model-volume
+        env:
+        - name: MODEL_SAVE_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: train-config         # Reference the ConfigMap "train-config"
+              key: MODEL_SAVE_PATH       # Set the MODEL_SAVE_PATH environment variable from the ConfigMap
 
       volumes:
-      - name: processed-data-pv # jurn jie's volume claim
+      - name: processed-data-pv          # Reference to the PersistentVolumeClaim for the processed data
         persistentVolumeClaim:
           claimName: processed-data-pvc
-      - name: saved-model-volume # hai jie'svolume claim
+      - name: saved-model-volume         # Reference to the PersistentVolumeClaim for saving the model
         persistentVolumeClaim:
           claimName: saved-model-pvc
 
+# This Deployment manages 3 replicas of the "model-training" pods. 
+# It uses a rolling update strategy to ensure that the application remains available during updates.
+# The pods mount volumes for processed data and model saving, and use an environment variable from a ConfigMap.
 ---
-# PV for saved model
+
+#######################################
+########## PERSISTENT VOLUME ##########
+#######################################
+
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: saved-model-volume  # Name of the Persistent Volume for the saved model
+  name: saved-model-volume    # Name of the Persistent Volume for the saved model
   namespace: ml-app
 spec:
   capacity:
-    storage: 4Gi  
+    storage: 4Gi              # The size of the Persistent Volume
   accessModes:
-    - ReadWriteMany  
+    - ReadWriteMany           # The volume can be mounted in read-write mode by many nodes simultaneously
   hostPath:
     path: "/mnt/saved_model"  # Path on the host machine where the model will be saved
-  persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Retain        
 
-
+# This PersistentVolume (PV) provides 4Gi of storage at /mnt/saved_model on the host machine.
+# The ReclaimPolicy is set to "Retain", meaning the volume won't be deleted automatically when the PVC is removed.
 ---
-# PVC for saved model
+
+##############################################
+########## PERSISTENTV VOLUME CLAIM ##########
+##############################################
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: saved-model-pvc  # Name of the PVC that will request the saved model volume
+  name: saved-model-pvc    # Name of the PVC that will request the saved model volume
   namespace: ml-app  
 spec:
   accessModes:
-    - ReadWriteOnce  
+    - ReadWriteOnce        # The volume can be mounted in read-write mode by a single node
   resources:
     requests:
-      storage: 4Gi  
+      storage: 4Gi         # Request for 4Gi of storage, matching the PersistentVolume
 
+# This PersistentVolumeClaim (PVC) requests 4Gi of storage with ReadWriteOnce access, 
+# meaning only one node can mount the volume in read-write mode at any time.
+# The PVC will bind to the PersistentVolume defined above.
 ---
+
+#############################
+########## SERVICE ##########
+#############################
+
 apiVersion: v1 
 kind: Service 
 metadata:
@@ -79,9 +132,13 @@ metadata:
   namespace: ml-app
 spec:
   selector:
-    app: model-training         # Labels used to identify the pods this Service targets
+    app: model-training    # Labels used to identify the pods this Service targets
   ports:
   - protocol: TCP          # The protocol for the port (usually TCP)
     port: 82               # The port that the Service exposes to the outside world
     targetPort: 8082       # The port on the pod/container that the Service forwards traffic to
   type: ClusterIP          # The type of Service; ClusterIP means it's accessible only within the cluster
+
+# This Service exposes the "model-training" pods on port 82 within the cluster.
+# It forwards traffic to port 8082 on the pods.
+# The Service type is ClusterIP, so it is only accessible within the Kubernetes cluster.

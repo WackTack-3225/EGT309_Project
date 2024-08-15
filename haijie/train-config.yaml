@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: train-config
-data:
-  MODEL_SAVE_PATH: "/mnt/saved_model"
