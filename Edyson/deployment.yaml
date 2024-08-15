@@ -1,6 +1,6 @@
-# Define the Namespace
-
+### Namespace
 # To seperate resource within cluster
+
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -8,9 +8,8 @@ metadata:
 
 ---
 
-# Configmap
-
-# Store non-confidential data
+### Configmap
+# Stores non-confidential data
 
 apiVersion: v1
 kind: ConfigMap
@@ -18,60 +17,35 @@ metadata:
   name: app-config
   namespace: ml-app        # The namespace in which the Service is created
 data:
-  DATA_PATH: "/mnt/data"
-  MODEL_PATH: "/mnt/save-model"
-  VOLUME_MOUNT_PATH: "/mnt"
-
+  MODEL_PATH: "/mnt/saved_model"
 
 ---
 
-# Service
-
-# Service accessible from within the cluster (ClusterIP) and will sent traffic to pods
-# it manages (recieves on 80 sent to containers at 8083)
-# Does not deploy or manage pods just route traffic
-# If can control >1 pod it will auto route traffic to them
+### Service
+# Service accessible from within the cluster (ClusterIP) and will sent traffic to pods (recieves on port 83 sent to containers at port 8083)
+# Does not deploy or manage pods, it only route traffics to containers/pods with the same labels and namespace at port 8083
+# If can control >1 (3 for this case) pod and it will route traffic to them
 
 apiVersion: v1  # Specifies the API version to use for the Service object
 kind: Service   # Defines this as a Service object
 metadata:
   name: inference-service  # The name of the Service
-  namespace: ml-app        # The namespace in which the Service is created
+  namespace: ml-app        # The namespace in which the Service is created in
 spec:
   selector:
-    app: inference         # Labels used to identify the pods this Service targets
+    app: inference         # Labels used to identify the pods this Service targets and route traffic to
   ports:
   - protocol: TCP          # The protocol for the port (usually TCP)
-    port: 80               # The port that the Service exposes to the outside world
+    port: 83               # The port that the Service exposes for communication without others within the cluster
     targetPort: 8083       # The port on the pod/container that the Service forwards traffic to
-  type: ClusterIP          # The type of Service; ClusterIP means it's accessible only within the cluster
+  type: ClusterIP          # The type of Service; ClusterIP means it is accessible only within the cluster
 
 ---
 
-# PVC
-
-# To allow request of a storage, request 4 Gi
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: store-model-pvc
-  namespace: ml-app        # The namespace in which the PVC is created
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 4Gi
-
----
-
-# Inference Deployment
-
-# Deployment use template to how pod shld be created
-# Replicaset controller created from deployment and it ensure pod is at desired state
-# and will mintor and if not it delete, create and manage pods
-# Note: rollback history is gone (no history of replicasets) if deployment.yaml is deleted and reapplied, only has history if its reapplied without deleting and only has history if changes is in template
+### Inference Deployment
+# Deployment uses a template which will be how the pods will be created
+# Note: rollback history is gone (no history of replicasets) if deployment.yaml is deleted and reapplied, replicaset controller's history is only retained if its reapplied without deleting the deployment.yaml file and only keeps a history for rollback if changes is in the template section, ultimately it allows smooth rollout and rollback
+# The ReplicaSet controller continuously monitors the number of running pods and, if it detects fewer or more than the desired 3 pods (desired state = 3 replicas) with the specified labels, it will create or delete pods to reach the target count, allowing self-healing
 
 apiVersion: apps/v1 
 kind: Deployment   
@@ -79,11 +53,10 @@ metadata:
   name: inference    # Name of Deployment
   namespace: ml-app  # The namespace in which the Deployment is created
 spec:
-  replicas: 3        # Number of pod replicas that should be running at all times
-  revisionHistoryLimit: 8  # Retain the last 8 ReplicaSets for rollback (decreased from default) ensuring enough versions are kept for rollback without bloating
-  minReadySeconds: 15 # Giving 15 seconds buffer time for pod to stabilize after being ready before being able to recieve traffic (Means pod marked as ready need state read for 15 seconds before being considered available to recieve traffic)
-  # It in turns tells kubernetes that replica needs to run for 10 seconds before update/replace of next one in sequence
-  progressDeadlineSeconds: 600  # 10 minutes to complete the update or considered as failed
+  replicas: 3        # Number of pod replicas that should be running at all times, can be scaled and ensures availability
+  revisionHistoryLimit: 8  # Retain the last 8 ReplicaSets history for rollback (decreased from default) ensuring enough versions are kept for rollback without bloating
+  minReadySeconds: 15 # Giving 15 seconds buffer time for pod to stabilize after being in the 'ready state' before being able to recieve traffic (This means pod marked as ready state require 15 seconds before being considered available to recieve traffic), it in turns tells kubernetes that replica needs to run for 15 seconds before update/replace of next pod in sequence
+  progressDeadlineSeconds: 600  # 10 minutes to complete the update or it is considered as failed
   selector:
     matchLabels:
       app: inference # Label Deployment uses to manage the pods it creates
@@ -92,39 +65,36 @@ spec:
     rollingUpdate:
       maxUnavailable: 1  # During an update, at most 1 pod can be unavailable at a time
       maxSurge: 1        # During an update, at most 1 extra pod can be created temporarily
-      # Matching maxunavailale and maxsurge ensures stradyrollout with no reduction in total available pods
+      # Matching maxunavailale and maxsurge ensures steady rollout and rollback with no reduction in total available pods
   template:
     metadata:
       name: inference-pod
       labels:
         app: inference   # Labels attached to the pods created by this Deployment
     spec:
-      restartPolicy: Always #Wont restart for 1 time task
+      restartPolicy: Always # Pod will always be restarted by the Kubernetes system if the container within the pod exits
       containers:
         - name: inference-container
-          image: edysontan/inference
+          image: edysontan/inference:latest
           ports:
             - containerPort: 8083        # Port that the container listens on
           volumeMounts:
-            - mountPath: /mnt  # Path inside container colume mounted at
-              name: store-model-volume
+            - mountPath: /mnt/saved_model
+              name: saved-model-volume
           env: # environment variables for container to use
-            - name: DATA_PATH
-              valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: DATA_PATH
             - name: MODEL_PATH
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: MODEL_PATH
-            - name: VOLUME_MOUNT_PATH
-              valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: VOLUME_MOUNT_PATH
-      volumes: # Associate store-model-volume to store-model-pvc and volumemount mounts this associated volume to /mnt
-        - name: store-model-volume
+      # Associate store-model-volume to store-model-pvc and volumemount mounts this associated volume to /mnt/saved_model to retrieve the safed model (not inserting volume into the container but only mounting)
+      # Persistent volume and claim used from model training for model extraction
+      volumes: 
+        - name: saved-model-volume
           persistentVolumeClaim:
-            claimName: store-model-pvc
+            claimName: saved-model-pvc
+
+
+
+
+
