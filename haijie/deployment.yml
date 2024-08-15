@@ -52,7 +52,7 @@ spec:
     spec:
       containers:
       - name: model-training             # Name of the container
-        image: edysontan/model-training  # Docker image containing the model training code
+        image: 200iqkid/model-training  # Docker image containing the model training code
         volumeMounts:
         - mountPath: "/app/data"         # Mount the processed data volume at /app/data inside the container
           name: processed-data-pv
