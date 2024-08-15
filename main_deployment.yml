@@ -265,12 +265,18 @@ spec:
     spec:
       containers:
       - name: model-training
-        image: edysontan/model-training:latest
+        image: 200iqkid/model-training:final-build
         volumeMounts:
         - name: processed-data-pv
           mountPath: "/app/data"
         - name: saved-model-volume
           mountPath: '/mnt/saved_model'
+        env:
+        - name: MODEL_SAVE_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: MODEL_SAVE_PATH
       volumes:
       - name: processed-data-pv
         persistentVolumeClaim:
