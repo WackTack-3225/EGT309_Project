@@ -9,7 +9,7 @@ metadata:
   name: model-training-deployment
   namespace: ml-app
 spec:
-  replicas: 1  # Number of pod replicas
+  replicas: 3  # Number of pod replicas
   selector:
     matchLabels:
       app: model-training
@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: model-training # model training code
-        image: 200iqkid/model-training # hai jie's image
+        image: edysontan/model-training # hai jie's image
         volumeMounts:
         - mountPath: "/app/data"  # to modify
           name: processed-data-pv
@@ -45,7 +45,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: saved-model-pv  # Name of the Persistent Volume for the saved model
+  name: saved-model-volume  # Name of the Persistent Volume for the saved model
   namespace: ml-app
 spec:
   capacity:

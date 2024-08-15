@@ -84,10 +84,16 @@
                     method: 'POST'
                 });
             })
-            .then(response => {
+            .then(response => response.json())
+            .then(data => {
+                // Display the JSON data as a string
+                if (data.success === true) {
+                    document.querySelector('.message').innerText = "Model is training. Your results will be ready by a button that will appear.";
+                } else {
+                    document.querySelector('.message').innerText = JSON.stringify(data, null, 2);
+                }
                 // Model training has started successfully
                 document.querySelector('.loading').style.display = 'none';
-                document.querySelector('.message').innerText = 'Model training has started successfully!';
                 document.querySelector('.message').style.display = 'block'; // Display confirmation message
 
                 // Pause execution for 5 seconds before showing the next-page-button
@@ -98,8 +104,10 @@
                     // Show the Go to Results button
                     document.querySelector('.next-page-button').style.display = 'block';
                     document.querySelector('.button-container').style.display = 'block'; // Show the button container
-                }, 5000); // 5 seconds
+                }, 45000); // 5 seconds
             })
+
+
             .catch(error => {
                 console.error('Error:', error);
                 // Stop loading screen and show error message
@@ -123,7 +131,11 @@
                 method: 'POST'
             })
             .then(response => response.json()) // no error validaiton
+
+
             .then(data => { // this is for data
+                document.getElementById('result').textContent = JSON.stringify(data);
+
                 sessionStorage.setItem('training_results', JSON.stringify(data.data));
 
                 window.location.href = '/results_page'; 

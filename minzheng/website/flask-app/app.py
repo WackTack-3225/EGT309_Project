@@ -56,11 +56,11 @@ def do_training():
         # Send POST request to data processing pod to start the training
         MODEL_TRAINING_URL = os.getenv("MODEL_TRAINING_URL")
 
-        response = requests.post(MODEL_TRAINING_URL), 200
+        response = requests.post(MODEL_TRAINING_URL)
         if response.status_code == 200:
             return jsonify({"success": True}), 200
         else:
-            return jsonify({"success": False, "error": "Training pipeline failed"}), 300
+            return jsonify({"success": False, "error": response.json()}), 300
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -71,7 +71,7 @@ def training_complete():
     try:
         RESULT_URL = os.getenv("RESULT_URL")
 
-        response = requests.post(RESULT_URL), 200
+        response = requests.post(RESULT_URL)
         if response.status_code == 200: # CRITICAL FAILURE HERE, JSON FILE UNRETRIEVABLE?
             result_data = response.json()
             # validation was supposed to go here

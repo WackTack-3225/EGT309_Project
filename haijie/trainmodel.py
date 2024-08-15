@@ -15,17 +15,10 @@ import json
 import subprocess
 import requests
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 @app.route('/train', methods=['POST'])
 def train():
-    # Retrieve the status code from the request headers
-    status_code = request.headers.get('Status-Code', type=int)  # Typecast to int
-
-    # Check if the status code is 200
-    if status_code != 200:
-        return jsonify({"error": "Invalid status code. Expected 200."}), 400
-
     # Start the training process in a new thread
     thread = Thread(target=run_training_and_notify)
     thread.start()
@@ -189,7 +182,7 @@ def run_training_and_notify():
                 "learning_rate": learning_rate,
                 "epochs": epochs,
                 "batch_size": 100, # Match the batch size used in training
-                "optimizer": optimizer._class.name_
+                "optimizer": optimizer.__class__.__name__
                 }         
             }
         
