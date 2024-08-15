@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training Results</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .result-item {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        .button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Training Results</h1>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultsContainer = document.getElementById('results');
+
+            try {
+                const results = JSON.parse(sessionStorage.getItem('training_results'));
+
+                if (results) {
+                    // Create and append accuracy result
+                    const accuracyDiv = document.createElement('div');
+                    accuracyDiv.classList.add('result-item');
+                    accuracyDiv.innerHTML = `<p><strong>Accuracy:</strong> ${results.accuracy}</p>`;
+                    resultsContainer.appendChild(accuracyDiv);
+
+                    // Create and append validation accuracy result
+                    const valAccuracyDiv = document.createElement('div');
+                    valAccuracyDiv.classList.add('result-item');
+                    valAccuracyDiv.innerHTML = `<p><strong>Validation Accuracy:</strong> ${results.val_accuracy}</p>`;
+                    resultsContainer.appendChild(valAccuracyDiv);
+
+                    // Create and append loss result
+                    const lossDiv = document.createElement('div');
+                    lossDiv.classList.add('result-item');
+                    lossDiv.innerHTML = `<p><strong>Loss:</strong> ${results.loss}</p>`;
+                    resultsContainer.appendChild(lossDiv);
+
+                    // Create and append validation loss result
+                    const valLossDiv = document.createElement('div');
+                    valLossDiv.classList.add('result-item');
+                    valLossDiv.innerHTML = `<p><strong>Validation Loss:</strong> ${results.val_loss}</p>`;
+                    resultsContainer.appendChild(valLossDiv);
+
+                    // Create and append model parameters
+                    const modelParamsDiv = document.createElement('div');
+                    modelParamsDiv.classList.add('result-item');
+                    modelParamsDiv.innerHTML = `
+                        <p><strong>Model Parameters:</strong></p>
+                        <p>Learning Rate: ${results.model_params.learning_rate}</p>
+                        <p>Epochs: ${results.model_params.epochs}</p>
+                        <p>Batch Size: ${results.model_params.batch_size}</p>
+                        <p>Optimizer: ${results.model_params.optimizer}</p>`;
+                    resultsContainer.appendChild(modelParamsDiv);
+
+                } else {
+                    // Display a message if no training results are found
+                    const noResultsDiv = document.createElement('div');
+                    noResultsDiv.classList.add('result-item');
+                    noResultsDiv.innerHTML = '<p>No training results found.</p>';
+                    resultsContainer.appendChild(noResultsDiv);
+                }
+            } catch (error) {
+                // Handle any errors that occur during JSON parsing or data retrieval
+                console.error('Error loading training results:', error);
+
+                // Display an error message to the user
+                const errorDiv = document.createElement('div');
+                errorDiv.classList.add('error-item');
+                errorDiv.innerHTML = error.message;
+                resultsContainer.appendChild(errorDiv);
+            }
+        });
+    </script>
+</body>
+</html>
