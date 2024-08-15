@@ -1,3 +1,5 @@
+# Note: for the documentation of deployment files, please inspect the individual deploy.yml/deployment.yml/deployment.yaml files found within each individual's sections
+
 # Namespace
 apiVersion: v1
 kind: Namespace
@@ -118,3 +120,206 @@ spec:
   hostPath:
     path: "/mnt/saved_model"  
   persistentVolumeReclaimPolicy: Retain
+
+---
+# Persistent Volume Claims (1/2) - Jurn Jie
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: processed-data-pvc
+  namespace: ml-app
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi
+
+---
+# Persistent Volume Claims (2/2) - Hai Jie
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saved-model-pvc
+  namespace: ml-app  
+spec:
+  accessModes:
+    - ReadWriteOnce  
+  resources:
+    requests:
+      storage: 4Gi  
+
+---
+# Deployment (1/4) - Min Zheng
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: ml-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      chapter: flask 
+  strategy:
+    type: RollingUpdate 
+    rollingUpdate:
+      maxUnavailable: 1 
+      maxSurge: 1 
+  template:
+    metadata:
+      labels:
+        chapter: flask 
+    spec:
+      containers:
+      - name: flask-container # refer to flask-app folder
+        image: edysontan/flask-app
+        env:
+        - name: DP_POD_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DP_POD_URL
+        - name: MODEL_TRAINING_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: MODEL_TRAINING_URL
+        - name: RESULT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: RESULT_URL
+        - name: INF_POD_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: INF_POD_URL
+        ports:
+        - containerPort: 5000 # set port 5000, same as app.py
+
+---
+# Deployment (2/4) - Jurn Jie
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processing-deployment
+  namespace: ml-app
+  labels:
+    app: data-processing
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: data-processing
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  revisionHistoryLimit: 10 
+  minReadySeconds: 5  
+  progressDeadlineSeconds: 600  
+  template:
+    metadata:
+      labels:
+        app: data-processing
+    spec:
+      containers:
+      - name: data-processing-container
+        image: 200iqkid/data-processing
+        volumeMounts:
+        - name: processed-data-pv 
+          mountPath: "/app/processed_data"
+        env:
+        - name: TRAIN_DIR
+          value: "/app/data_309/train"
+        - name: TEST_DIR
+          value: "/app/data_309/test"
+      volumes:
+      - name: processed-data-pv
+        persistentVolumeClaim:
+          claimName: processed-data-pvc
+
+---
+# Deployment (3/4) - Hai Jie
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-training-deployment
+  namespace: ml-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: model-training
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: model-training
+    spec:
+      containers:
+      - name: model-training
+        image: edysontan/model-training
+        volumeMounts:
+        - name: processed-data-pv
+          mountPath: "/app/data"
+        - name: saved-model-volume
+          mountPath: '/mnt/saved_model'
+      volumes:
+      - name: processed-data-pv
+        persistentVolumeClaim:
+          claimName: processed-data-pvc
+      - name: saved-model-volume
+        persistentVolumeClaim:
+          claimName: saved-model-pvc
+
+---
+apiVersion: apps/v1 
+kind: Deployment   
+metadata:
+  name: inference 
+  namespace: ml-app 
+spec:
+  replicas: 3 
+  selector:
+    matchLabels:
+      app: inference
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 8 
+  minReadySeconds: 15
+  progressDeadlineSeconds: 600
+  template:
+    metadata:
+      name: inference-pod
+      labels:
+        app: inference
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: inference-container
+          image: edysontan/inference:latest
+          ports:
+            - containerPort: 8083
+          volumeMounts:
+            - name: saved-model-volume
+              mountPath: /mnt/saved_model
+          env:
+            - name: MODEL_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MODEL_PATH
+      volumes: 
+        - name: saved-model-volume
+          persistentVolumeClaim:
+            claimName: saved-model-pvc
