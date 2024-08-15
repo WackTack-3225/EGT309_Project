@@ -1,0 +1,120 @@
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml-app
+---
+# Config Mapping
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: ml-app
+data:
+  # used by min zheng - flask
+  DP_POD_URL: "http://processing-service:84/start-processing" 
+  MODEL_TRAINING_URL: "http://model-training-service:82/train" 
+  RESULT_URL: "http://model-training-service:82/results" 
+  INF_POD_URL: "http://inference-service:83/predict" 
+
+  # used by edyson - model saved location
+  MODEL_PATH: "/mnt/saved_model"
+
+  # used by hai jie - model saved location
+  MODEL_SAVE_PATH: "/mnt/saved_model"
+
+---
+# Service (1/4) - Flask App(Min Zheng)
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+  namespace: ml-app 
+  labels:
+    chapter: flask 
+spec:
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 5000  
+    targetPort: 5000 
+    nodePort: 30005
+  selector:
+    chapter: flask
+---
+# Service (2/4) - Flask App(Jurn Jie)
+apiVersion: v1
+kind: Service
+metadata:
+  name: processing-service
+  namespace: ml-app
+spec:
+  selector:
+    app: data-processing
+  ports:
+  - protocol: TCP
+    port: 84
+    targetPort: 8084
+  type: ClusterIP
+---
+# Service (3/4) - Flask App(Hai Jie)
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: model-training-service  
+  namespace: ml-app
+spec:
+  selector:
+    app: model-training
+  ports:
+  - protocol: TCP      
+    port: 82         
+    targetPort: 8082    
+  type: ClusterIP   
+
+---
+# Service (4/4) - Flask App(Edyson)
+apiVersion: v1  
+kind: Service  
+metadata:
+  name: inference-service 
+  namespace: ml-app     
+spec:
+  selector:
+    app: inference      
+  ports:
+  - protocol: TCP       
+    port: 83          
+    targetPort: 8083   
+  type: ClusterIP
+
+---
+# Persistent Volumes (1/2) - Jurn Jie
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: processed-data-pv
+spec:
+  capacity:
+    storage: 4Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/data"
+
+---
+# Persistent Volumes (2/2) - Hai Jie
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: saved-model-volume
+  namespace: ml-app
+spec:
+  capacity:
+    storage: 4Gi  
+  accessModes:
+    - ReadWriteMany  
+  hostPath:
+    path: "/mnt/saved_model"  
+  persistentVolumeReclaimPolicy: Retain
