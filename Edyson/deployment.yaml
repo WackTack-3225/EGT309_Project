@@ -50,7 +50,7 @@ spec:
 apiVersion: apps/v1 
 kind: Deployment   
 metadata:
-  name: inference    # Name of Deployment
+  name: inference-deployment    # Name of Deployment
   namespace: ml-app  # The namespace in which the Deployment is created
 spec:
   replicas: 3        # Number of pod replicas that should be running at all times, can be scaled and ensures availability

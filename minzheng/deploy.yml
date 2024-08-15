@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: flask-container
-        image: edysontan/flask-app # pull from flask-app image
+        image: wacktack/flask-app:latest # pull from flask-app image
         env: # to get Config map variables
         - name: DP_POD_URL
           valueFrom:

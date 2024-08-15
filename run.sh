@@ -3,21 +3,48 @@
 # Handle minikube processess (assuming is downloaded)
 minikube delete
 minikube start --cpus=4 memory=4096
-eval $(minikube docker-env)
+eval $(minikube docker-env) 
 
-# Build ALL Docker images
+# Run the consolidated deployment file on start-up
+kubectl apply -f deployment.yml
 
-# build flask 
-docker pull wacktack/flask-app:latest
-# build data processing
-docker pull jurnjie/data-processing:latest
-# build model training
-docker pull 200iqkid/model-training:latest
-# build inference
-docker pull edysontan/inference:latest
+# Function to display the menu
+function show_menu() {
+    echo "1) Get pods status"
+    echo "2) Get url to application"
+    echo "3) Exit"
+    echo -n "Please enter your choice: "
+}
 
-# Run the consolidated deployment file
-kubectl apply -f deployment.yml 
+# Function to perform Task 1
+function task1() {
+    kubectl get pods -n ml-app -w
+}
 
-# Return the url of the website
-minikube service flask-app-service -n ml-app --url
+# Function to perform Task 2
+function task2() {
+    # Attempt to retrieve the service URL
+    SERVICE_URL=$(minikube service flask-app-service -n ml-app --url)
+    
+    if [[ $SERVICE_URL =~ http:// ]]; then
+        echo "Service URL: $SERVICE_URL"
+    else
+        echo "No valid URL returned. Please try again."
+    fi
+}
+
+# Main logic
+while true
+do
+    show_menu
+    read CHOICE
+    case "$CHOICE" in
+        1) task1 ;;
+        2) task2 ;;
+        3) echo "Exiting..."
+           exit ;;
+        *) echo "Invalid choice. Please select 1, 2, 3"
+           echo "Press any key to continue..."
+           read -n 1
+    esac
+done

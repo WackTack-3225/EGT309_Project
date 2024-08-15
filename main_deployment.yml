@@ -172,8 +172,8 @@ spec:
         chapter: flask 
     spec:
       containers:
-      - name: flask-container # refer to flask-app folder
-        image: edysontan/flask-app
+      - name: flask-container 
+        image:  wacktack/flask-app:final-build
         env:
         - name: DP_POD_URL
           valueFrom:
@@ -227,7 +227,7 @@ spec:
     spec:
       containers:
       - name: data-processing-container
-        image: 200iqkid/data-processing
+        image: 200iqkid/data-processing:latest
         volumeMounts:
         - name: processed-data-pv 
           mountPath: "/app/processed_data"
@@ -265,7 +265,7 @@ spec:
     spec:
       containers:
       - name: model-training
-        image: edysontan/model-training
+        image: edysontan/model-training:latest
         volumeMounts:
         - name: processed-data-pv
           mountPath: "/app/data"
@@ -307,7 +307,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: inference-container
-          image: edysontan/inference:latest
+          image: edysontan/inference:final-build
           ports:
             - containerPort: 8083
           volumeMounts:
