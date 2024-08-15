@@ -7,13 +7,9 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install TensorFlow or Keras, or any other dependencies needed for model saving
-
-# If you have dependencies in a requirements.txt file, uncomment the next line
+# Upgrades pip to ensure the latest library installations, then installs dependencies from requirements.txt for structured and organized dependency management.
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-# RUN pip install tensorflow keras
 
-
-# Run your Python script
+# Runs Python script
 CMD ["python", "predict.py"]
