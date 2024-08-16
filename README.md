@@ -21,7 +21,7 @@ After the web server receives a good response from the Data Processing Pod, it w
 
 Shortly after, the web server will send a 3rd POST request back to the Model Training Pod to retrieve the model results and parameters in a JSON Message. It will then display the results on the web page.
 
-### *Inference Pipeline**
+### **Inference Pipeline**
 A user will choose to upload images to send for inference via the upload button. When the button is clicked to start the inference, the uploaded images are then processed into Base64 JSON encodings, where they will then by sent to the Inference Pod over a JSON Message.
 
 The web server will make a POST request to the inference pod, where it will decode the Message sent, retrieve a saved model and process the images. The images are then returned back in Base64 JSON encodings alongside the predicted label and confidence in a JSON Message in the response. 
@@ -63,13 +63,17 @@ Each section of the project is containerized using Docker and deployed on a Kube
 
 Key Components:
 
-1. Pods: Each section runs in its own set of pods, ensuring isolation and scalability. [*They are deployed under `Kind: Deployment` for convenience can consistency between sections*]
+1. Pods: 
+- Each section runs in its own set of pods, ensuring isolation and scalability. [*They are deployed under `Kind: Deployment` for convenience and consistency between sections*]
 
-2. Services: Kubernetes Services are used to expose each section of the pipeline, making it accessible within the cluster. NodePorts and ClusterIP's are used for connection. 
+2. Services: 
+- Kubernetes Services are used to expose each section of the pipeline, making it accessible within the cluster. NodePorts and ClusterIP's are used for connection. 
 
-3. Persistent Volumes: Used to store the trained model and intermediate data, ensuring that data persists even if pods are restarted.
+3. Persistent Volumes: 
+- Used to store the trained model and intermediate data, ensuring that data persists even if pods are restarted.
 
-4. ConfigMaps: Manage configuration data separately from the application code, allowing for easy updates and management. Especially for indicating filepaths and endpoints
+4. ConfigMaps: 
+- Manage configuration data separately from the application code, allowing for easy updates and management. Especially for indicating filepaths and endpoints
 
 # File Structure
 
