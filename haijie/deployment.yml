@@ -52,7 +52,7 @@ spec:
     spec:
       containers:
       - name: model-training                    # Name of the container
-        image: 200iqkid/model-training:latest   # Latest Docker image containing the model training code
+        image: 200iqkid/model-training:final-build   # Latest Docker image containing the model training code
         volumeMounts:
         - mountPath: "/app/data"                # Mount the processed data volume at /app/data inside the container
           name: processed-data-pv

@@ -75,7 +75,7 @@ spec:
       restartPolicy: Always # Pod will always be restarted by the Kubernetes system if the container within the pod exits
       containers:
         - name: inference-container
-          image: edysontan/inference:latest
+          image: edysontan/inference:final-build
           ports:
             - containerPort: 8083        # Port that the container listens on
           volumeMounts:

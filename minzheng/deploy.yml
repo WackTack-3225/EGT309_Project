@@ -1,6 +1,6 @@
 # Define the Namespace
 apiVersion: v1
-kind: Namespace # abstraction layer to prevent pods from being build in base env to prevent accidental errors
+kind: Namespace # allow for filtering and selection of pods in namespace for clarity
 metadata:
   name: ml-app
 
@@ -13,8 +13,8 @@ metadata:
   namespace: ml-app
 data:
   DP_POD_URL: "http://processing-service:84/start-processing" # WORKING
-  MODEL_TRAINING_URL: "http://model-training-service:82/train" # SET TO CORRECT (?)
-  RESULT_URL: "http://model-training-service:82/results" # SET TO CORRECT(?)
+  MODEL_TRAINING_URL: "http://model-training-service:82/train" # SET TO CORRECT
+  RESULT_URL: "http://model-training-service:82/results" # SET TO CORRECT
   INF_POD_URL: "http://inference-service:83/predict" # WORKING
 
 ---
@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: flask-container
-        image: wacktack/flask-app:latest # pull from flask-app image
+        image: wacktack/flask-app:final-build # pull from flask-app image
         env: # to get Config map variables
         - name: DP_POD_URL
           valueFrom:
@@ -76,7 +76,7 @@ metadata:
   labels:
     chapter: flask # unique calling method to ensure service operates on this specific chapter
 spec:
-  type: NodePort  # LoadBalancer for external
+  type: NodePort  # exposes the service on a static port on the node IP address
   ports:
   - protocol: TCP
     port: 5000  # Exposed port
