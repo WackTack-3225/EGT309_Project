@@ -56,7 +56,7 @@ spec:
   replicas: 3        # Number of pod replicas that should be running at all times, can be scaled and ensures availability
   revisionHistoryLimit: 8  # Retain the last 8 ReplicaSets history for rollback (decreased from default) ensuring enough versions are kept for rollback without bloating
   minReadySeconds: 15 # Giving 15 seconds buffer time for pod to stabilize after being in the 'ready state' before being able to recieve traffic (This means pod marked as ready state require 15 seconds before being considered available to recieve traffic), it in turns tells kubernetes that replica needs to run for 15 seconds before update/replace of next pod in sequence
-  progressDeadlineSeconds: 600  # 10 minutes to complete the update or it is considered as failed
+  progressDeadlineSeconds: 1200  # 20 minutes to complete the update or it is considered as failed
   selector:
     matchLabels:
       app: inference # Label Deployment uses to manage the pods it creates

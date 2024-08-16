@@ -304,7 +304,7 @@ spec:
       maxSurge: 1
   revisionHistoryLimit: 8 
   minReadySeconds: 15
-  progressDeadlineSeconds: 600
+  progressDeadlineSeconds: 1200
   template:
     metadata:
       name: inference-pod
