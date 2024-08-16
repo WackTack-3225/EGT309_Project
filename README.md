@@ -14,6 +14,20 @@ This project aims to apply our skills learnt in class, as well as the various me
 
 ![Project Pipelines](/.images_readme/pipeline.png)
 
+### **Model Training Pipeline**
+The Model Training Pipeline involves the web server sending a POST request to the Data Processing Pod. The Data Processing Pod then sends back a response after the processing is complete. The Data Processing pod stores the processed data in Persistent Volume 1. 
+
+After the web server receives a good response from the Data Processing Pod, it will then make a 2nd POST request to the Model Training Pod. The Model Training Pod then begins to take the processed data from Persistent Volume 1, and trains a deep learning model. It then writes and saves the model parameters and outputs into a json file into Persistent Volume 2. it also saves the trained model. The Model Training Pod then returns a response back to the web server.
+
+Shortly after, the web server will send a 3rd POST request back to the Model Training Pod to retrieve the model results and parameters in a JSON Message. It will then display the results on the web page.
+
+### *Inference Pipeline**
+A user will choose to upload images to send for inference via the upload button. When the button is clicked to start the inference, the uploaded images are then processed into Base64 JSON encodings, where they will then by sent to the Inference Pod over a JSON Message.
+
+The web server will make a POST request to the inference pod, where it will decode the Message sent, retrieve a saved model and process the images. The images are then returned back in Base64 JSON encodings alongside the predicted label and confidence in a JSON Message in the response. 
+
+The web server will then display the images and results on the webpage after unpacking the images from the Base64 encoding.
+
 # Project Components
 
 ## 1. **Web Interface**
