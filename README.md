@@ -12,6 +12,8 @@ This project aims to apply our skills learnt in class, as well as the various me
 
 ## Pipeline 
 
+![Project Pipelines](/.images_readme/pipeline.png)
+
 # Project Components
 
 ## 1. **Web Interface**
